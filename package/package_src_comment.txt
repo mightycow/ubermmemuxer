@@ -1,0 +1,14 @@
+==================================================================================
+
+Uber MME Muxer (UMM) Source Code Release
+
+Author: Gian 'myT' Schellenbaum
+
+==================================================================================
+
+The entire source code in this release is covered by the GPL.
+See COPYING.txt for the GNU GENERAL PUBLIC LICENSE.
+
+Uber MME Muxer (UMM) is Copyright (C) 2013 Gian 'myT' Schellenbaum.
+
+==================================================================================

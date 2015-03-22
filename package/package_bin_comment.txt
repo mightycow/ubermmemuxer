@@ -1,0 +1,15 @@
+==================================================================================
+
+Uber (Q3)MME Muxer (UMM) Binary Release
+
+Author: Gian 'myT' Schellenbaum
+
+==================================================================================
+
+Special thanks:
+- id Software
+- The Q3MME developers
+- The MPlayer/MEncoder developers
+- farnish: feedback on the installation/set-up process
+
+==================================================================================

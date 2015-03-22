@@ -1,0 +1,36 @@
+To do:
+X Progress tab (only shown during jobs)
+X Fix underscores disappearing in the log window (they're used for creating accelerators, switched to TextBlock instances instead)
+X Display speed in FPS
+X Implement file naming rules for video sequence jobs
+X Fix the progress bar starting over in .avi sequence mode with .wav file
+X Job list management (top/up/down/bottom/clear/remove/add file/add folder)
+X Update quotes
+X README.txt
+X Verify the mencoder.exe path before the encode job starts!
+X GUI fix: not enough space for "Custom VFW DLL" in Aero
+X Implement job cancelation
+X Improve default settings
+- Help in the GUI?
+- Balloon tips?
+- Output folder selection rules?
+- Thread-safe progress management?
+
+=================================================
+deprecated
+-------------------------------------------------
+Cases:
+a) single .avi file or a folder with a single .avi file and an optional .wav file
+b) folder with image sequences and an optional .wav file
+c) folder with several .avi files and optional .wav file
+Re-arrange that? How to select output folder in case a) ?!
+=================================================
+
+=================================================
+in use
+-------------------------------------------------
+Cases:
+a) folder with 1+ image sequence and an optional .wav file
+b) folder with 1+ .avi files and an optional .wav file OR a single .avi file
+That way maybe? Keeps the code simpler I guess.
+=================================================

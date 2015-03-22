@@ -1,0 +1,29 @@
+0.1.0e (06.10.2013)
+ADD: Current (encoding) frame rate and frame index in the "Progress" tab
+
+0.1.0d (27.09.2013)
+FIX: The "Output all files to this folder?" option wasn't applied to image sequence folders
+
+0.1.0c (27.09.2013)
+FIX: Verify the MEncoder .exe file path before the encode job starts!
+FIX: Not enough space for the "Custom VFW DLL" label in Aero
+ADD: Job cancelation
+CHG: Change some group box headers to clarify use cases
+CHG: More sensible default settings
+FIX: The "Jobs List" list box was showing the parent folder's path instead of the folder name
+
+0.1.0b (26.09.2013)
+FIX: Depth and stencil sequences .avi output containing audio
+FIX: UMM having a console window
+FIX: MEncoder's console window appearing
+CHG: Custom MEncoder codec selection changed to custom libavcodec options
+FIX: No job thread is started when there's no valid command-line file/folder arguments
+CHG: The "Jobs List" list box' background now displays a message about drag'n'drop support
+
+0.1.0a (26.09.2013)
+FIX: Minor UI adjustments
+1st: README.txt
+ADD: New quotes :D
+
+0.1.0 (25.09.2013)
+1st: First public release

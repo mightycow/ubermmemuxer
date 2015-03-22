@@ -1,0 +1,8 @@
+README.txt
+COPYING.txt
+changelog.txt
+..\Properties\*
+..\src\*
+..\UberMmeMuxer.sln
+..\UberMmeMuxer.csproj
+..\UMM.ico

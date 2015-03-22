@@ -1,0 +1,15 @@
+*.lnk
+*.pdf
+*.webm
+*.zip
+*.rar
+*.cmd
+*.cachefile
+*.suo
+*.ReSharper
+_ReSharper.*
+_ReSharper.*/*
+bin/*
+obj/
+__*
+__*/*
