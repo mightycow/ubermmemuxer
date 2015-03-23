@@ -43,6 +43,7 @@ namespace Uber.MmeMuxer
         public string CustomMonochromeVfwCodecName = "";
         public string MEncoderFilePath = @"C:\Program Files (x86)\MPlayer\mencoder.exe";
         public int FrameRate = 60;
+        public int OutputFrameRate = 60;
         public bool ShowColorCodecDialog = false;
         public bool ShowMonochromeCodecDialog = false;
         public bool DisplayMEncoderStdErr = true;
@@ -707,7 +708,7 @@ namespace Uber.MmeMuxer
         public string CreateMEncoderArguments(string workingDir, MEncoderArguments args)
         {
             // MEncoder arguments examples:
-            // @""new.avi" -audiofile "new.wav" -oac copy -ovc vfw -xvfwopts codec=LAGARITH.DLL -of avi -o ..\umm_test_output.avi";
+            // @""new.avi" -audiofile "new.wav" -oac copy -ovc vfw -xvfwopts codec=LAGARITH.DLL -of avi -ofps 60 -o ..\umm_test_output.avi";
             // @"mf://*.tga -mf fps=60 -audiofile "new.wav" -oac copy -ovc vfw -xvfwopts codec=LAGARITH.DLL -of avi -o ..\umm_test_output.avi";
 
             var codec = args.Monochrome ? Config.MonochromeCodec : Config.ColorCodec;
@@ -816,6 +817,12 @@ namespace Uber.MmeMuxer
                     break;
             }
 
+            if(args.ImageSequence && Config.OutputFrameRate != Config.FrameRate)
+            {
+                arguments.Append(" -ofps ");
+                arguments.Append(Config.OutputFrameRate);
+            }
+
             arguments.Append(" -of avi -o \"");
             arguments.Append(args.OutputFilePath);
             arguments.Append("\"");
@@ -841,7 +848,7 @@ namespace Uber.MmeMuxer
 
             if(method == FileNamingMethod.AddSuffix)
             {
-                return Config.FileNamingSuffix + sourceFileName;
+                return Path.GetFileNameWithoutExtension(sourceFileName) + Config.FileNamingSuffix + Path.GetExtension(sourceFileName);
             }
 
             try

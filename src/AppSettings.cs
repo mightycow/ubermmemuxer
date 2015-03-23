@@ -203,7 +203,8 @@ namespace Uber.MmeMuxer
 
         // General.
         private TextBox _mEncoderFilePathEditBox;
-        private TextBox _frameRateEditBox;
+        private TextBox _inputFrameRateEditBox;
+        private TextBox _outputFrameRateEditBox;
         private CheckBox _displayMEncoderStdErrCheckBox;
         private CheckBox _outputAllFilesToSameFolderCheckBox;
         private TextBox _outputFolderTextBox;
@@ -290,23 +291,40 @@ namespace Uber.MmeMuxer
             DockPanel.SetDock(mEncoderFilePathLabel, Dock.Left);
             DockPanel.SetDock(mEncoderFilePathEditBox, Dock.Left);
 
-            var frameRateLabel = new Label();
-            frameRateLabel.HorizontalAlignment = HorizontalAlignment.Stretch;
-            frameRateLabel.VerticalAlignment = VerticalAlignment.Center;
-            frameRateLabel.Margin = new Thickness(4, 5, 5, 0);
-            frameRateLabel.Content = "Frame Rate";
+            var inputFrameRateLabel = new Label();
+            inputFrameRateLabel.HorizontalAlignment = HorizontalAlignment.Stretch;
+            inputFrameRateLabel.VerticalAlignment = VerticalAlignment.Center;
+            inputFrameRateLabel.Margin = new Thickness(4, 5, 5, 0);
+            inputFrameRateLabel.Content = "Input Frame Rate";
 
-            var frameRateEditBox = new TextBox();
-            _frameRateEditBox = frameRateEditBox;
-            frameRateEditBox.HorizontalAlignment = HorizontalAlignment.Left;
-            frameRateEditBox.VerticalAlignment = VerticalAlignment.Center;
-            frameRateEditBox.Margin = new Thickness(5, 5, 5, 0);
-            frameRateEditBox.Width = 30;
+            var outputFrameRateLabel = new Label();
+            outputFrameRateLabel.HorizontalAlignment = HorizontalAlignment.Stretch;
+            outputFrameRateLabel.VerticalAlignment = VerticalAlignment.Center;
+            outputFrameRateLabel.Margin = new Thickness(4, 5, 5, 0);
+            outputFrameRateLabel.Content = "Output Frame Rate";
+            outputFrameRateLabel.ToolTip = "Output FPS is only used for image sequences";
+
+            var inputFrameRateEditBox = new TextBox();
+            _inputFrameRateEditBox = inputFrameRateEditBox;
+            inputFrameRateEditBox.HorizontalAlignment = HorizontalAlignment.Left;
+            inputFrameRateEditBox.VerticalAlignment = VerticalAlignment.Center;
+            inputFrameRateEditBox.Margin = new Thickness(5, 5, 5, 0);
+            inputFrameRateEditBox.Width = 30;
+
+            var outputFrameRateEditBox = new TextBox();
+            _outputFrameRateEditBox = outputFrameRateEditBox;
+            outputFrameRateEditBox.HorizontalAlignment = HorizontalAlignment.Left;
+            outputFrameRateEditBox.VerticalAlignment = VerticalAlignment.Center;
+            outputFrameRateEditBox.Margin = new Thickness(5, 5, 5, 0);
+            outputFrameRateEditBox.Width = 30;
+            outputFrameRateEditBox.ToolTip = "Output FPS is only used for image sequences";
 
             var frameRatePanelList = new List<Tuple<FrameworkElement, FrameworkElement>>();
-            var frameRatePanelTuple = Tuple.Create<FrameworkElement, FrameworkElement>(frameRateLabel, frameRateEditBox);
-            frameRatePanelList.Add(frameRatePanelTuple);
-            var frameRatePanel = WpfHelper.CreateDualColumnPanel(frameRatePanelList, 70, 0, 0);
+            var inputFrameRatePanelTuple = Tuple.Create<FrameworkElement, FrameworkElement>(inputFrameRateLabel, inputFrameRateEditBox);
+            var outputFrameRatePanelTuple = Tuple.Create<FrameworkElement, FrameworkElement>(outputFrameRateLabel, outputFrameRateEditBox);
+            frameRatePanelList.Add(inputFrameRatePanelTuple);
+            frameRatePanelList.Add(outputFrameRatePanelTuple);
+            var frameRatePanel = WpfHelper.CreateDualColumnPanel(frameRatePanelList, 120, 0, 0);
             frameRatePanel.Margin = new Thickness(0);
 
             var displayMEncoderStdErrCheckBox = new CheckBox();
@@ -544,7 +562,8 @@ namespace Uber.MmeMuxer
         private void SaveGeneralSettings()
         {
             Config.MEncoderFilePath = _mEncoderFilePathEditBox.Text;
-            int.TryParse(_frameRateEditBox.Text, out Config.FrameRate);
+            int.TryParse(_inputFrameRateEditBox.Text, out Config.FrameRate);
+            int.TryParse(_outputFrameRateEditBox.Text, out Config.OutputFrameRate);
             Config.DisplayMEncoderStdErr = _displayMEncoderStdErrCheckBox.IsChecked.HasValue && _displayMEncoderStdErrCheckBox.IsChecked.Value;
             Config.OutputAllFilesToSameFolder = _outputAllFilesToSameFolderCheckBox.IsChecked.HasValue && _outputAllFilesToSameFolderCheckBox.IsChecked.Value;
             Config.OutputFolderPath = _outputFolderTextBox.Text;
@@ -553,7 +572,8 @@ namespace Uber.MmeMuxer
         private void LoadGeneralSettings()
         {
             _mEncoderFilePathEditBox.Text = Config.MEncoderFilePath;
-            _frameRateEditBox.Text = Config.FrameRate.ToString();
+            _inputFrameRateEditBox.Text = Config.FrameRate.ToString();
+            _outputFrameRateEditBox.Text = Config.OutputFrameRate.ToString();
             _displayMEncoderStdErrCheckBox.IsChecked = Config.DisplayMEncoderStdErr;
             _outputAllFilesToSameFolderCheckBox.IsChecked = Config.OutputAllFilesToSameFolder;
             _outputFolderTextBox.Text = Config.OutputFolderPath;

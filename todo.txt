@@ -1,6 +1,4 @@
 To do:
-- Input and output framerate edit boxes instead of just one for both: existing is for input
-  Add -ofps $(output_fps) before -o $(output_file_path)
 - Help in the GUI?
 - Balloon tips?
 - Output folder selection rules?
