@@ -39,7 +39,6 @@ namespace Uber
             logListBox.VerticalAlignment = VerticalAlignment.Stretch;
             logListBox.Margin = new Thickness(5);
             logListBox.Height = height;
-            logListBox.Resources.Add(SystemColors.HighlightBrushKey, new SolidColorBrush(Color.FromRgb(255, 255, 191)));
 
             InitLogListBoxClearCommand();
             InitLogListBoxCopyCommand();
@@ -75,15 +74,12 @@ namespace Uber
             logMenuItem.Items.Add(saveLogMenuItem);
         }
 
-        public void LogMessage(string message, Color color)
+        public void LogMessage(string message)
         {
             VoidDelegate itemAdder = delegate
             {
-                var textBlock = new TextBlock();
-                textBlock.Foreground = new SolidColorBrush(color);
-                textBlock.Text = message;
-                _logListBox.Items.Add(textBlock);
-                _logListBox.ScrollIntoView(textBlock);
+                _logListBox.Items.Add(message);
+                _logListBox.ScrollIntoView(message);
             };
 
             _logListBox.Dispatcher.Invoke(itemAdder);
@@ -91,17 +87,17 @@ namespace Uber
 
         public void LogInfo(string message, params object[] args)
         {
-            LogMessage(string.Format(message, args), Color.FromRgb(0, 0, 0));
+            LogMessage(string.Format(message, args));
         }
 
         public void LogWarning(string message, params object[] args)
         {
-            LogMessage(string.Format(message, args), Color.FromRgb(255, 127, 0));
+            LogMessage("WARNING: " + string.Format(message, args));
         }
 
         public void LogError(string message, params object[] args)
         {
-            LogMessage(string.Format(message, args), Color.FromRgb(255, 0, 0));
+            LogMessage("ERROR: " + string.Format(message, args));
         }
 
         private void InitLogListBoxClearCommand()
@@ -153,13 +149,7 @@ namespace Uber
 
             foreach(var item in _logListBox.Items)
             {
-                var label = item as Label;
-                if(label == null)
-                {
-                    continue;
-                }
-
-                var line = label.Content as string;
+                var line = item as string;
                 if(line == null)
                 {
                     continue;
@@ -183,13 +173,7 @@ namespace Uber
 
         private void CopyLogSelection()
         {
-            var label = _logListBox.SelectedItem as Label;
-            if(label == null)
-            {
-                return;
-            }
-
-            var line = label.Content as string;
+            var line = _logListBox.SelectedItem as string;
             if(line == null)
             {
                 return;
