@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Reflection;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
@@ -102,6 +104,20 @@ namespace Uber
 
             SaveConfig();
             Application.Shutdown();
+        }
+
+        protected void ViewHelp()
+        {
+            try
+            {
+                var exeDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                var helpPath = Path.Combine(exeDir, "README.txt");
+                Process.Start(helpPath);
+            }
+            catch(Exception exception)
+            {
+                Log.LogError("Couldn't open the help: " + exception.Message);
+            }
         }
 
         protected void ShowAboutWindow()

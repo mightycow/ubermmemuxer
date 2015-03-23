@@ -172,13 +172,20 @@ namespace Uber.MmeMuxer
             var log = new Log(150);
             Log = log;
 
+            var viewHelpMenuItem = new MenuItem();
+            viewHelpMenuItem.Header = "View Help";
+            viewHelpMenuItem.Click += (obj, arg) => ViewHelp();
+            viewHelpMenuItem.ToolTip = new ToolTip { Content = "Opens README.txt with your current text editor" };
+
             var aboutMenuItem = new MenuItem();
-            aboutMenuItem.Header = "_About";
+            aboutMenuItem.Header = "_About Uber MME Muxer";
             aboutMenuItem.Click += (obj, arg) => ShowAboutWindow();
             aboutMenuItem.ToolTip = new ToolTip { Content = "Learn more about this awesome application" };
 
             var helpMenuItem = new MenuItem();
             helpMenuItem.Header = "_Help";
+            helpMenuItem.Items.Add(viewHelpMenuItem);
+            helpMenuItem.Items.Add(new Separator());
             helpMenuItem.Items.Add(aboutMenuItem);
 
             var mainMenu = new Menu();
