@@ -1,3 +1,7 @@
+0.1.1a (25.03.2015)
+ADD: Option to skip the first N frames (suggested by entik)
+FIX: The application could freeze when output and input input frame rate didn't match and error output was disabled
+
 0.1.1 (25.03.2015)
 ADD: Option to change the output frame rate in image sequence mode
 ADD: A menu entry to view the help (opens the readme.txt file)
