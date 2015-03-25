@@ -1,16 +1,4 @@
 To do:
-X Progress tab (only shown during jobs)
-X Fix underscores disappearing in the log window (they're used for creating accelerators, switched to TextBlock instances instead)
-X Display speed in FPS
-X Implement file naming rules for video sequence jobs
-X Fix the progress bar starting over in .avi sequence mode with .wav file
-X Job list management (top/up/down/bottom/clear/remove/add file/add folder)
-X Update quotes
-X README.txt
-X Verify the mencoder.exe path before the encode job starts!
-X GUI fix: not enough space for "Custom VFW DLL" in Aero
-X Implement job cancelation
-X Improve default settings
 - Help in the GUI?
 - Balloon tips?
 - Output folder selection rules?

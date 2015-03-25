@@ -1,3 +1,11 @@
+0.1.1 (25.03.2015)
+ADD: Option to change the output frame rate in image sequence mode
+ADD: A menu entry to view the help (opens the readme.txt file)
+CHG: Log highlight background color is no longer custom
+CHG: Log foreground color is no longer custom for warnings and errors
+FIX: Log copy and save to file functions
+FIX: Suffix renaming mode was adding a prefix
+
 0.1.0e (06.10.2013)
 ADD: Current (encoding) frame rate and frame index in the "Progress" tab
 
