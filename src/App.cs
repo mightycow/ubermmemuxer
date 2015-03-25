@@ -16,7 +16,7 @@ namespace Uber.MmeMuxer
 {
     public static class UmmVersion
     {
-        public static readonly string String = "0.1.0e";
+        public static readonly string String = "0.1.1";
     }
 
     public class MEncoderArguments
