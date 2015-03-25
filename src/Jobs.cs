@@ -226,9 +226,13 @@ namespace Uber.MmeMuxer
             var stream = process.StandardError.BaseStream;
             var byteCount = stream.EndRead(result);
             var text = System.Text.Encoding.ASCII.GetString(data.Buffer, 0, byteCount);
-            _mEncoderErrorOutputMutex.WaitOne();
-            _mEncoderErrorOutput += text;
-            _mEncoderErrorOutputMutex.ReleaseMutex();
+
+            if(UmmApp.Instance.GetConfig().DisplayMEncoderStdErr)
+            {
+                _mEncoderErrorOutputMutex.WaitOne();
+                _mEncoderErrorOutput += text;
+                _mEncoderErrorOutputMutex.ReleaseMutex();
+            }
 
             if(!process.HasExited)
             {
@@ -249,11 +253,13 @@ namespace Uber.MmeMuxer
             }
 
             Thread stdErrorReaderThread = null;
-            if(UmmApp.Instance.GetConfig().DisplayMEncoderStdErr)
+            if(readProgress)
             {
                 stdErrorReaderThread = new Thread(ProcessErrOutputReadingThread);
                 stdErrorReaderThread.Start(process);
             }
+
+            Thread.Sleep(1000);
 
             // Wait for the process to finish.
             process.WaitForExit();

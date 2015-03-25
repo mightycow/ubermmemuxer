@@ -205,6 +205,7 @@ namespace Uber.MmeMuxer
         private TextBox _mEncoderFilePathEditBox;
         private TextBox _inputFrameRateEditBox;
         private TextBox _outputFrameRateEditBox;
+        private TextBox _framesToSkipEditBox;
         private CheckBox _displayMEncoderStdErrCheckBox;
         private CheckBox _outputAllFilesToSameFolderCheckBox;
         private TextBox _outputFolderTextBox;
@@ -319,11 +320,26 @@ namespace Uber.MmeMuxer
             outputFrameRateEditBox.Width = 30;
             outputFrameRateEditBox.ToolTip = "Output FPS is only used for image sequences";
 
+            var framesToSkipLabel = new Label();
+            framesToSkipLabel.HorizontalAlignment = HorizontalAlignment.Stretch;
+            framesToSkipLabel.VerticalAlignment = VerticalAlignment.Center;
+            framesToSkipLabel.Margin = new Thickness(4, 5, 5, 0);
+            framesToSkipLabel.Content = "Frames to Skip";
+
+            var framesToSkipEditBox = new TextBox();
+            _framesToSkipEditBox = framesToSkipEditBox;
+            framesToSkipEditBox.HorizontalAlignment = HorizontalAlignment.Left;
+            framesToSkipEditBox.VerticalAlignment = VerticalAlignment.Center;
+            framesToSkipEditBox.Margin = new Thickness(5, 5, 5, 0);
+            framesToSkipEditBox.Width = 30;
+
             var frameRatePanelList = new List<Tuple<FrameworkElement, FrameworkElement>>();
             var inputFrameRatePanelTuple = Tuple.Create<FrameworkElement, FrameworkElement>(inputFrameRateLabel, inputFrameRateEditBox);
             var outputFrameRatePanelTuple = Tuple.Create<FrameworkElement, FrameworkElement>(outputFrameRateLabel, outputFrameRateEditBox);
+            var framesToSkipPanelTuple = Tuple.Create<FrameworkElement, FrameworkElement>(framesToSkipLabel, framesToSkipEditBox);
             frameRatePanelList.Add(inputFrameRatePanelTuple);
             frameRatePanelList.Add(outputFrameRatePanelTuple);
+            frameRatePanelList.Add(framesToSkipPanelTuple);
             var frameRatePanel = WpfHelper.CreateDualColumnPanel(frameRatePanelList, 120, 0, 0);
             frameRatePanel.Margin = new Thickness(0);
 
@@ -564,6 +580,7 @@ namespace Uber.MmeMuxer
             Config.MEncoderFilePath = _mEncoderFilePathEditBox.Text;
             int.TryParse(_inputFrameRateEditBox.Text, out Config.FrameRate);
             int.TryParse(_outputFrameRateEditBox.Text, out Config.OutputFrameRate);
+            int.TryParse(_framesToSkipEditBox.Text, out Config.FramesToSkip);
             Config.DisplayMEncoderStdErr = _displayMEncoderStdErrCheckBox.IsChecked.HasValue && _displayMEncoderStdErrCheckBox.IsChecked.Value;
             Config.OutputAllFilesToSameFolder = _outputAllFilesToSameFolderCheckBox.IsChecked.HasValue && _outputAllFilesToSameFolderCheckBox.IsChecked.Value;
             Config.OutputFolderPath = _outputFolderTextBox.Text;
@@ -574,6 +591,7 @@ namespace Uber.MmeMuxer
             _mEncoderFilePathEditBox.Text = Config.MEncoderFilePath;
             _inputFrameRateEditBox.Text = Config.FrameRate.ToString();
             _outputFrameRateEditBox.Text = Config.OutputFrameRate.ToString();
+            _framesToSkipEditBox.Text = Config.FramesToSkip.ToString();
             _displayMEncoderStdErrCheckBox.IsChecked = Config.DisplayMEncoderStdErr;
             _outputAllFilesToSameFolderCheckBox.IsChecked = Config.OutputAllFilesToSameFolder;
             _outputFolderTextBox.Text = Config.OutputFolderPath;

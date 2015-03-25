@@ -16,7 +16,7 @@ namespace Uber.MmeMuxer
 {
     public static class UmmVersion
     {
-        public static readonly string String = "0.1.1";
+        public static readonly string String = "0.1.1a";
     }
 
     public class MEncoderArguments
@@ -54,6 +54,7 @@ namespace Uber.MmeMuxer
         public string FileNamingSuffix = "";
         public string FileNamingRegExpMatch = "(.+)\\.(.+)";
         public string FileNamingRegExpReplacement = "$1_lag.avi";
+        public int FramesToSkip = 2;
     }
 
     public partial class UmmApp : AppBase<UmmConfig>
@@ -766,6 +767,13 @@ namespace Uber.MmeMuxer
                 }
             }
 
+            if(Config.FramesToSkip > 0)
+            {
+                var startTimeSeconds = (double)Config.FramesToSkip * (1.0 / (double)Config.OutputFrameRate);
+                arguments.Append(" -ss ");
+                arguments.Append(startTimeSeconds);
+            }
+            
             if(args.UseSeparateAudioFile && args.InputAudioPath != null && File.Exists(args.InputAudioPath))
             {
                 var audioFilePath = args.InputAudioPath;
