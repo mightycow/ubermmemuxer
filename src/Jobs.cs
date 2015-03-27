@@ -36,6 +36,7 @@ namespace Uber.MmeMuxer
         public delegate void FrameRateDelegate(double frameRate);
         public delegate void FrameIndexDelegate(int frameIndex);
 
+        public abstract void SaveJobToBatchFile(StreamWriter file);
         public abstract bool ProcessJob();
 
         public ProgressDelegate JobProgressCallback
@@ -362,6 +363,42 @@ namespace Uber.MmeMuxer
             }
         }
 
+        public override void SaveJobToBatchFile(StreamWriter file)
+        {
+            var workDir = GetWorkDir();
+            var outputFilePath = CreateOutputFilePath();
+            var videoFilePaths = GetVideoFilePaths();
+            var args = new MEncoderArguments();
+            args.AviHasAudio = _aviHasAudio;
+            args.ImageSequence = false;
+            args.InputAudioPath = _audioFilePath != null ? Path.GetFullPath(_audioFilePath) : null;
+            args.InputVideoPaths.AddRange(videoFilePaths);
+            args.OutputFilePath = outputFilePath;
+            args.UseSeparateAudioFile = (_audioFilePath != null) && (_videoFilePaths.Count == 1);
+            UmmApp.Instance.WriteTobatchFile(file, workDir, args);
+
+            if(DoesNeedAdditionalPass)
+            {
+                workDir = GetWorkDir();
+                outputFilePath = CreateOutputFilePath(true);
+                args = new MEncoderArguments();
+                args.AviHasAudio = false;
+                args.ImageSequence = false;
+                args.InputAudioPath = Path.GetFullPath(_audioFilePath);
+                args.InputVideoPaths.Add(TempFileName);
+                args.OutputFilePath = outputFilePath;
+                args.UseSeparateAudioFile = true;
+                args.CodecOverride = true;
+                args.Codec = VideoCodec.Copy;
+
+                UmmApp.Instance.WriteTobatchFile(file, workDir, args);
+
+                var tempFilePath = Path.Combine(workDir, TempFileName);
+                file.Write("del ");
+                file.WriteLine(tempFilePath);
+            }
+        }
+
         public override bool ProcessJob()
         {
             // This job only has 1 sub-job.
@@ -632,6 +669,28 @@ namespace Uber.MmeMuxer
             HasAudio = _audioFilePath != null;
         }
 
+        public override void SaveJobToBatchFile(StreamWriter file)
+        {
+            foreach(var sequence in _imageSequences)
+            {
+                var config = UmmApp.Instance.GetConfig();
+                var parentFolderPath = Path.GetDirectoryName(_folderPath);
+                var folderName = Path.GetFileName(_folderPath);
+                var outputFilePath = Path.Combine(config.OutputAllFilesToSameFolder ? config.OutputFolderPath : parentFolderPath, sequence.OutputFileName);
+                var args = new MEncoderArguments();
+                args.AviHasAudio = false;
+                args.ImageSequence = true;
+                args.InputAudioPath = HasAudio ? Path.GetFullPath(_audioFilePath) : null;
+                args.InputImagesPath = sequence.ImageSequencePath;
+                args.OutputFilePath = outputFilePath;
+                args.UseSeparateAudioFile = HasAudio && !sequence.Monochrome;
+                args.Monochrome = sequence.Monochrome;
+
+                var folderPath = Path.GetFullPath(_folderPath);
+                UmmApp.Instance.WriteTobatchFile(file, folderPath, args);
+            } 
+        }
+
         public override bool ProcessJob()
         {
             TotalWorkLoad = 0;
@@ -640,7 +699,6 @@ namespace Uber.MmeMuxer
             {
                 TotalWorkLoad += sequence.ImageFilePaths.Count;
             }
-            
 
             foreach(var sequence in _imageSequences)
             {

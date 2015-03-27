@@ -558,6 +558,40 @@ namespace Uber.MmeMuxer
         {
         }
 
+        private void OnSaveJobsToBatchFile()
+        {
+            if(_jobs.Count == 0)
+            {
+                LogWarning("No job in the list.");
+                return;
+            }
+
+            SaveConfig();
+
+            var saveFileDialog = new System.Windows.Forms.SaveFileDialog();
+            saveFileDialog.InitialDirectory = System.Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            saveFileDialog.Filter = "Windows batch file (*.cmd)|*.cmd";
+            saveFileDialog.FileName = "UMM_encode_job.cmd";
+            var success = saveFileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK;
+            saveFileDialog.Dispose();
+            if(!success)
+            {
+                return;
+            }
+
+            var fileStream = File.Open(saveFileDialog.FileName, FileMode.Create, FileAccess.Write);
+            var streamWriter = new StreamWriter(fileStream);
+            foreach(var job in _jobs)
+            {
+                job.SaveJobToBatchFile(streamWriter);
+            }
+
+            streamWriter.Close();
+            streamWriter.Dispose();
+            fileStream.Close();
+            fileStream.Dispose();
+        }
+
         private void OnProcessJobs()
         {
             SaveConfig();
@@ -687,6 +721,27 @@ namespace Uber.MmeMuxer
             {
                 ColorCodecDialogShown = true;
             }
+        }
+
+        public void WriteTobatchFile(StreamWriter file, string workingDir, MEncoderArguments args)
+        {
+            workingDir = Path.GetFullPath(workingDir);
+            var arguments = CreateMEncoderArguments(workingDir, args);
+            var encoderPath = Path.GetFullPath(Config.MEncoderFilePath);
+            var stringBuilder = new StringBuilder();
+
+            // Set the current directory.
+            stringBuilder.Append("cd /D \"");
+            stringBuilder.Append(workingDir);
+            stringBuilder.AppendLine("\"");
+
+            // Invoke MEncoder.
+            stringBuilder.Append("\"");
+            stringBuilder.Append(encoderPath);
+            stringBuilder.Append("\" ");
+            stringBuilder.AppendLine(arguments);
+
+            file.Write(stringBuilder.ToString());
         }
 
         public ProcessStartInfo CreateMEncoderProcessStartInfo(string workingDir, MEncoderArguments args)
