@@ -217,6 +217,9 @@ namespace Uber.MmeMuxer
         private TextBox _fileNamingRegExpMatchTextBox;
         private TextBox _fileNamingReplacementTextBox;
 
+        // Image sequence file naming.
+        private RadioButton _fileNamingUseImageNameRadioButton;
+
         private FrameworkElement CreateSettingsTab()
         {
             _colorCodecSettings.Title = "Color Video CODEC";
@@ -234,6 +237,7 @@ namespace Uber.MmeMuxer
 
             var generalGroupBox = CreateGeneralSettingsGui();
             var fileNamingGroupBox = CreateFileNamingRulesGui();
+            var fileNamingSequenceGroupBox = CreateSequenceNamingRulesGui();
 
             var wrapPanel = new WrapPanel();
             wrapPanel.HorizontalAlignment = HorizontalAlignment.Stretch;
@@ -243,6 +247,7 @@ namespace Uber.MmeMuxer
             wrapPanel.Children.Add(colorCodecPanel);
             wrapPanel.Children.Add(monochromeCodecPanel);
             wrapPanel.Children.Add(generalGroupBox);
+            wrapPanel.Children.Add(fileNamingSequenceGroupBox);
             wrapPanel.Children.Add(fileNamingGroupBox);
 
             var scrollViewer = new ScrollViewer();
@@ -500,7 +505,46 @@ namespace Uber.MmeMuxer
             fileNamingGroupBox.HorizontalAlignment = HorizontalAlignment.Stretch;
             fileNamingGroupBox.VerticalAlignment = VerticalAlignment.Stretch;
             fileNamingGroupBox.Margin = new Thickness(5);
-            fileNamingGroupBox.Header = "File Naming Rules (only for .avi file input)";
+            fileNamingGroupBox.Header = "Output File Naming Rules";
+            fileNamingGroupBox.Content = fileNamingStackPanel;
+
+            return fileNamingGroupBox;
+        }
+
+        private FrameworkElement CreateSequenceNamingRulesGui()
+        {
+            var margin = new Thickness(5, 5, 5, 0);
+
+            var useDirectoryRadioButton = new RadioButton();
+            useDirectoryRadioButton.HorizontalAlignment = HorizontalAlignment.Left;
+            useDirectoryRadioButton.VerticalAlignment = VerticalAlignment.Center;
+            useDirectoryRadioButton.Margin = margin;
+            useDirectoryRadioButton.Content = "Use the parent directory's name";
+            useDirectoryRadioButton.GroupName = "Sequence File Naming Rules";
+            useDirectoryRadioButton.IsChecked = !Config.FileNamingUseImageName;
+
+            var useFileRadioButton = new RadioButton();
+            _fileNamingUseImageNameRadioButton = useFileRadioButton;
+            useFileRadioButton.HorizontalAlignment = HorizontalAlignment.Left;
+            useFileRadioButton.VerticalAlignment = VerticalAlignment.Center;
+            useFileRadioButton.Margin = margin;
+            useFileRadioButton.Content = "Use the image sequence's (file) name";
+            useFileRadioButton.GroupName = "Sequence File Naming Rules";
+            useFileRadioButton.IsChecked = Config.FileNamingUseImageName;
+
+            var fileNamingStackPanel = new StackPanel();
+            fileNamingStackPanel.HorizontalAlignment = HorizontalAlignment.Stretch;
+            fileNamingStackPanel.VerticalAlignment = VerticalAlignment.Stretch;
+            fileNamingStackPanel.Margin = new Thickness(5);
+            fileNamingStackPanel.Orientation = Orientation.Vertical;
+            fileNamingStackPanel.Children.Add(useDirectoryRadioButton);
+            fileNamingStackPanel.Children.Add(useFileRadioButton);
+
+            var fileNamingGroupBox = new GroupBox();
+            fileNamingGroupBox.HorizontalAlignment = HorizontalAlignment.Stretch;
+            fileNamingGroupBox.VerticalAlignment = VerticalAlignment.Stretch;
+            fileNamingGroupBox.Margin = new Thickness(5);
+            fileNamingGroupBox.Header = "Image Sequence File Naming Rules";
             fileNamingGroupBox.Content = fileNamingStackPanel;
 
             return fileNamingGroupBox;
@@ -616,6 +660,9 @@ namespace Uber.MmeMuxer
             Config.FileNamingSuffix = _fileNamingSuffixTextBox.Text;
             Config.FileNamingRegExpMatch = _fileNamingRegExpMatchTextBox.Text;
             Config.FileNamingRegExpReplacement = _fileNamingReplacementTextBox.Text;
+
+            // Image sequence mode.
+            Config.FileNamingUseImageName = _fileNamingUseImageNameRadioButton.IsChecked ?? false;
         }
 
         private void LoadFileNamingSettings()
@@ -634,6 +681,9 @@ namespace Uber.MmeMuxer
             _fileNamingSuffixTextBox.Text = Config.FileNamingSuffix;
             _fileNamingRegExpMatchTextBox.Text = Config.FileNamingRegExpMatch;
             _fileNamingReplacementTextBox.Text = Config.FileNamingRegExpReplacement;
+
+            // Image sequence mode.
+            _fileNamingUseImageNameRadioButton.IsChecked = Config.FileNamingUseImageName;
         }
 
         protected override void LoadConfig()

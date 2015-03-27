@@ -55,6 +55,7 @@ namespace Uber.MmeMuxer
         public string FileNamingRegExpMatch = "(.+)\\.(.+)";
         public string FileNamingRegExpReplacement = "$1_lag.avi";
         public int FramesToSkip = 2;
+        public bool FileNamingUseImageName = false;
     }
 
     public partial class UmmApp : AppBase<UmmConfig>

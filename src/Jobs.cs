@@ -561,14 +561,21 @@ namespace Uber.MmeMuxer
 
     public class ImageSequenceEncodeJob : EncodeJob
     {
+        private enum ImageType
+        {
+            Normal,
+            Depth,
+            Stencil
+        }
+
         private class ImageSequence
         {
             public readonly List<string> ImageFilePaths = new List<string>();
             public string ImageSequenceRegEx;
             public string ImageSequencePath;
             public string OutputFileName;
-            public bool WouldWantNoSuffix;
             public bool Monochrome;
+            public ImageType Type = ImageType.Normal;
         }
 
         private string _folderPath;
@@ -634,28 +641,6 @@ namespace Uber.MmeMuxer
                 TotalWorkLoad += sequence.ImageFilePaths.Count;
             }
             
-
-            var simpleNameCount = 0;
-            foreach(var sequence in _imageSequences)
-            {
-                if(sequence.WouldWantNoSuffix)
-                {
-                    ++simpleNameCount;
-                }
-            }
-
-            if(simpleNameCount == 1)
-            {
-                foreach(var sequence in _imageSequences)
-                {
-                    if(sequence.WouldWantNoSuffix)
-                    {
-                        var folderName = Path.GetFileName(_folderPath);
-                        sequence.OutputFileName = folderName + ".avi";
-                        break;
-                    }
-                }
-            }
 
             foreach(var sequence in _imageSequences)
             {
@@ -725,41 +710,41 @@ namespace Uber.MmeMuxer
             return UmmApp.MEncoderSequenceMatchRegEx.Replace(fileName, UmmApp.MEncoderSequenceReplacement);
         }
 
-        private string CreateOutputFileName(string fileName, out bool wouldWantSimplestName)
+        private string CreateOutputFileName(string fileName, ImageType imageType)
         {
-            wouldWantSimplestName = false;
+            if(UmmApp.Instance.GetConfig().FileNamingUseImageName)
+            {
+                return CreateOutputFileNameFromFile(fileName, imageType);
+            }
 
+            return CreateOutputFileNameFromDirectory(fileName, imageType);
+        }
+
+        private string CreateOutputFileNameFromFile(string fileName, ImageType imageType)
+        {
             var folderName = Path.GetFileName(_folderPath);
             var fileNameNoExt = Path.GetFileNameWithoutExtension(fileName);
             var fixedFileNameWithBadExt = UmmApp.MEncoderSequenceMatchRegEx.Replace(fileName, "").Replace("..", ".");
             var fixedFileNameNoExt = Path.GetFileNameWithoutExtension(fixedFileNameWithBadExt);
 
-            var firstDigitIdx = -1;
-            var i = 0;
-            foreach(var c in fileNameNoExt)
+            return fixedFileNameNoExt + ".avi";
+        }
+
+        private string CreateOutputFileNameFromDirectory(string fileName, ImageType imageType)
+        {
+            var folderName = Path.GetFileName(_folderPath);
+            
+            if(imageType == ImageType.Depth)
             {
-                if(char.IsDigit(c))
-                {
-                    firstDigitIdx = i;
-                    break;
-                }
-                ++i;
+                return folderName + ".depth.avi";
             }
 
-            if(firstDigitIdx > 1 && firstDigitIdx < fileNameNoExt.Length - 1)
+            if(imageType == ImageType.Stencil)
             {
-                var lastSeparatorIdx = firstDigitIdx - 1;
-                var separator = fileNameNoExt[lastSeparatorIdx];
-                var firstSeparatorIdx = fileNameNoExt.IndexOf(separator);
-                if(firstSeparatorIdx < lastSeparatorIdx)
-                {
-                    return folderName + "_" + fileNameNoExt.Substring(firstSeparatorIdx + 1, lastSeparatorIdx - firstSeparatorIdx - 1) + ".avi";
-                }
+                return folderName + ".stencil.avi";
             }
 
-            wouldWantSimplestName = true;
-
-            return folderName + "_" + fixedFileNameNoExt + ".avi";
+            return folderName + ".avi";
         }
 
         private List<ImageSequence> SplitSequences(string[] filePaths)
@@ -794,15 +779,17 @@ namespace Uber.MmeMuxer
                     continue;
                 }
 
-                var wouldWantSimplestName = false;
                 var firstImageName = fileNameI;
                 var sequence = new ImageSequence();
+                var hasDepth = firstImageName.Contains(".depth.");
+                var hasStencil = firstImageName.Contains(".stencil.");
+                var sequenceType = hasDepth ? ImageType.Depth : (hasStencil ? ImageType.Stencil : ImageType.Normal);
                 sequence.ImageFilePaths.AddRange(imagePaths);
                 sequence.ImageSequencePath = CreateMEncoderSequenceString(firstImageName);
                 sequence.ImageSequenceRegEx = regExString;
-                sequence.OutputFileName = CreateOutputFileName(firstImageName, out wouldWantSimplestName);
-                sequence.Monochrome = firstImageName.Contains(".depth.") || firstImageName.Contains(".stencil.");
-                sequence.WouldWantNoSuffix = wouldWantSimplestName;
+                sequence.OutputFileName = UmmApp.Instance.CreateOutputFileName(CreateOutputFileName(firstImageName, sequenceType));
+                sequence.Monochrome = hasDepth || hasStencil;
+                sequence.Type = sequenceType;
                 sequences.Add(sequence);
 
                 if(i == filePaths.Length - 1)
