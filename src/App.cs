@@ -653,6 +653,7 @@ namespace Uber.MmeMuxer
             ColorCodecDialogShown = false;
             MonochromeCodecDialogShown = false;
 
+            _currentJobProgress = 0.0;
             SetProgressThreadSafe(0.0);
 
             TotalWorkLoad = 0;
@@ -690,6 +691,8 @@ namespace Uber.MmeMuxer
 
                 ProcessedWorkLoad += job.FrameCount;
                 var progress = 100.0 * (ProcessedWorkLoad / (double)TotalWorkLoad);
+
+                _currentJobProgress = 0.0;
                 SetProgressThreadSafe(progress);
             }
 

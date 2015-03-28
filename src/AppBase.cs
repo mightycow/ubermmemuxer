@@ -33,7 +33,6 @@ namespace Uber
         protected int TotalWorkLoad = 0;
         protected int ProcessedWorkLoad = 0; // Not counting the current job's progress.
         protected int CurrentJobWorkLoad = 0;
-        protected double CurrentProgress = 0.0;
         protected readonly Stopwatch ProgressTimer = new Stopwatch();
         protected Label TimeElapsedLabel;
         protected Label TimeRemainingLabel;
@@ -44,8 +43,11 @@ namespace Uber
         private Thread _progressUpdateThread;
         private bool _stopProgressUpdateThread;
         private int _previousTabIndex = -1;
-        private int _currentFrameIndex = -1;
-        private double _currentFrameRate = -1.0;
+        private int _currentJobFrameIndex = -1;
+        private double _currentJobFrameRate = -1.0;
+        protected double _currentJobProgress = 0.0;
+        private double _currentBatchProgress = 0.0;
+        private bool _firstBatchProgressRead = false;
 
         public AppBase(string[] cmdLineArgs)
         {
@@ -207,14 +209,14 @@ namespace Uber
 
         protected void SetProgressThreadSafe(double value)
         {
-            CurrentProgress = value;
-
+            _currentBatchProgress = value;
             VoidDelegate valueSetter = delegate { ProgressBar.Value = value; ProgressBar.InvalidateVisual(); };
             ProgressBar.Dispatcher.Invoke(valueSetter);
         }
 
         public void SetCurrentJobProgress(double value)
         {
+            _currentJobProgress = value;
             var total = TotalWorkLoad;
             var done = ProcessedWorkLoad + (int)(CurrentJobWorkLoad * (value / 100.0));
 
@@ -223,17 +225,21 @@ namespace Uber
 
         public void SetCurrentSubJobFrameRate(double frameRate)
         {
-            _currentFrameRate = frameRate;
+            _currentJobFrameRate = frameRate;
         }
 
         public void SetCurrentSubJobFrameIndex(int index)
         {
-            _currentFrameIndex = index;
+            _currentJobFrameIndex = index;
         }
 
         public void SetJobAsStarted()
         {
-            ProgressTimer.Restart();
+            if(!_firstBatchProgressRead)
+            {
+                ProgressTimer.Restart();
+                _firstBatchProgressRead = true;
+            }
         }
 
         protected FrameworkElement CreateProgressTab()
@@ -273,7 +279,6 @@ namespace Uber
 
         protected void HideProgressThreadSafe()
         {
-            ProgressTimer.Stop();
             ProgressTimer.Reset();
 
             VoidDelegate progressTabRemover = delegate 
@@ -293,7 +298,8 @@ namespace Uber
         protected void ShowProgressNonThreadSafe()
         {
             ProgressTimer.Reset();
-            _currentFrameIndex = 0;
+            _currentJobFrameIndex = 0;
+            _firstBatchProgressRead = false;
 
             _previousTabIndex = TabControl.SelectedIndex;
             TabControl.Items.Add(ProgressTab);
@@ -317,30 +323,32 @@ namespace Uber
                 return;
             }
 
-            var elapsedMs = ProgressTimer.ElapsedMilliseconds;
-            var progress = CurrentProgress / 100.0;
-            var totalMs = (long)(elapsedMs / progress);
+            var elapsed = ProgressTimer.Elapsed;
+            var elapsedMs = (int)elapsed.TotalMilliseconds;
+            var jobProgress = _currentJobProgress / 100.0;
+            var batchProgress = _currentBatchProgress / 100.0;
+            var totalMs = (long)(elapsedMs / batchProgress);
             var remainingMs = totalMs - elapsedMs;
 
-            var frameCount = ProcessedWorkLoad + (int)(CurrentJobWorkLoad * progress);
-            var fps = frameCount / ((double)elapsedMs / 1000.0);
+            var frameCount = ProcessedWorkLoad + (int)(CurrentJobWorkLoad * jobProgress);
+            var fps = frameCount / elapsed.TotalSeconds;
             var averageSpeed = (double.IsNaN(fps) || double.IsInfinity(fps) || fps < 0.1) ? "N/A" : (fps.ToString("F1") + " FPS");
 
-            VoidDelegate progressGuiUpdater = delegate 
+            VoidDelegate progressGuiUpdater = delegate
             {
                 TimeElapsedLabel.Content = FormatMilliSeconds(elapsedMs);
                 TimeRemainingLabel.Content = FormatMilliSeconds(remainingMs);
                 AverageSpeedLabel.Content = averageSpeed;
-                CurrentSpeedLabel.Content = _currentFrameRate >= 0.1 ? (_currentFrameRate.ToString("F1") + " FPS") : "N/A";
-                FrameIndexLabel.Content = _currentFrameIndex >= 1 ? _currentFrameIndex.ToString() : "N/A";
+                CurrentSpeedLabel.Content = _currentJobFrameRate >= 0.1 ? (_currentJobFrameRate.ToString("F1") + " FPS") : "N/A";
+                FrameIndexLabel.Content = _currentJobFrameIndex >= 1 ? _currentJobFrameIndex.ToString() : "N/A";
             };
             ProgressTab.Dispatcher.Invoke(progressGuiUpdater);
         }
 
         protected void OnJobStart()
         {
-            _currentFrameRate = -1.0;
-            _currentFrameIndex = -1;
+            _currentJobFrameRate = -1.0;
+            _currentJobFrameIndex = -1;
         }
 
         private void UpdateProgressThread()
@@ -378,10 +386,10 @@ namespace Uber
             var elapsedMsDbl = (double)elapsedMs;
             if( double.IsNaN(elapsedMsDbl) || 
                 double.IsInfinity(elapsedMsDbl) || 
-                elapsedMsDbl <= 0.0 ||
+                elapsedMsDbl < 0.0 ||
                 elapsedMsDbl >= 100 * MilliSecondsInADay)
             {
-                return "Replacing the flux capacitor...";
+                return "N/A";
             }
 
             var elapsed = TimeSpan.FromMilliseconds(elapsedMsDbl);

@@ -20,7 +20,6 @@ namespace Uber.MmeMuxer
         }
 
         private double _previousProgress;
-        private bool _firstProgressRead = false;
 
         protected readonly Mutex _mEncoderErrorOutputMutex = new Mutex();
         protected string _mEncoderErrorOutput;
@@ -78,7 +77,6 @@ namespace Uber.MmeMuxer
         protected void ProcessStdOutputReadingThreadImpl(Process process)
         {
             _previousProgress = 0.0;
-            _firstProgressRead = false;
 
             var data = new AsyncCallbackData();
             data.Process = process;
@@ -114,11 +112,7 @@ namespace Uber.MmeMuxer
             var progressMatch = UmmApp.MEncoderProgressRegEx.Match(text);
             if(progressMatch.Success)
             {
-                if(!_firstProgressRead)
-                {
-                    UmmApp.Instance.SetJobAsStarted();
-                    _firstProgressRead = true;
-                }
+                UmmApp.Instance.SetJobAsStarted();
 
                 var progressString = progressMatch.Groups[1].Captures[0].Value;
                 var progress = 0;
