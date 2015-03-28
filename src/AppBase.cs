@@ -213,7 +213,7 @@ namespace Uber
             ProgressBar.Dispatcher.Invoke(valueSetter);
         }
 
-        protected void SetCurrentJobProgress(double value)
+        public void SetCurrentJobProgress(double value)
         {
             var total = TotalWorkLoad;
             var done = ProcessedWorkLoad + (int)(CurrentJobWorkLoad * (value / 100.0));
@@ -221,14 +221,19 @@ namespace Uber
             SetProgressThreadSafe(100.0 * (done / (double)total));
         }
 
-        protected void SetCurrentSubJobFrameRate(double frameRate)
+        public void SetCurrentSubJobFrameRate(double frameRate)
         {
             _currentFrameRate = frameRate;
         }
 
-        protected void SetCurrentSubJobFrameIndex(int index)
+        public void SetCurrentSubJobFrameIndex(int index)
         {
             _currentFrameIndex = index;
+        }
+
+        public void SetJobAsStarted()
+        {
+            ProgressTimer.Restart();
         }
 
         protected FrameworkElement CreateProgressTab()
@@ -287,11 +292,18 @@ namespace Uber
 
         protected void ShowProgressNonThreadSafe()
         {
-            ProgressTimer.Restart();
+            ProgressTimer.Reset();
+            _currentFrameIndex = 0;
 
             _previousTabIndex = TabControl.SelectedIndex;
             TabControl.Items.Add(ProgressTab);
             TabControl.SelectedIndex = TabControl.Items.Count - 1;
+
+            TimeElapsedLabel.Content = "N/A";
+            TimeRemainingLabel.Content = "N/A";
+            AverageSpeedLabel.Content = "N/A";
+            CurrentSpeedLabel.Content = "N/A";
+            FrameIndexLabel.Content = "N/A";
 
             var thread = new Thread(UpdateProgressThread);
             _progressUpdateThread = thread;
@@ -300,13 +312,18 @@ namespace Uber
 
         protected void UpdateProgress()
         {
+            if(!ProgressTimer.IsRunning || ProgressTimer.ElapsedMilliseconds < 100)
+            {
+                return;
+            }
+
             var elapsedMs = ProgressTimer.ElapsedMilliseconds;
             var progress = CurrentProgress / 100.0;
             var totalMs = (long)(elapsedMs / progress);
             var remainingMs = totalMs - elapsedMs;
 
             var frameCount = ProcessedWorkLoad + (int)(CurrentJobWorkLoad * progress);
-            var fps = frameCount / (double)(elapsedMs / 1000);
+            var fps = frameCount / ((double)elapsedMs / 1000.0);
             var averageSpeed = (double.IsNaN(fps) || double.IsInfinity(fps) || fps < 0.1) ? "N/A" : (fps.ToString("F1") + " FPS");
 
             VoidDelegate progressGuiUpdater = delegate 

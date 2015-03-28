@@ -15,13 +15,12 @@ namespace Uber.MmeMuxer
 
         private class AsyncCallbackData
         {
-            public ProgressDelegate ProgressCallback;
-            public IndexChangeDelegate VideoIndexChangeCallback;
             public byte[] Buffer = new byte[4096]; // 4 KB.
             public Process Process;
         }
 
         private double _previousProgress;
+        private bool _firstProgressRead = false;
 
         protected readonly Mutex _mEncoderErrorOutputMutex = new Mutex();
         protected string _mEncoderErrorOutput;
@@ -38,24 +37,6 @@ namespace Uber.MmeMuxer
 
         public abstract void SaveJobToBatchFile(StreamWriter file);
         public abstract bool ProcessJob();
-
-        public ProgressDelegate JobProgressCallback
-        {
-            get;
-            protected set;
-        }
-
-        public FrameRateDelegate JobFrameRateCallback
-        {
-            get;
-            protected set;
-        }
-
-        public FrameIndexDelegate JobFrameIndexCallback
-        {
-            get;
-            protected set;
-        }
 
         public bool IsValid
         {
@@ -97,11 +78,10 @@ namespace Uber.MmeMuxer
         protected void ProcessStdOutputReadingThreadImpl(Process process)
         {
             _previousProgress = 0.0;
+            _firstProgressRead = false;
 
             var data = new AsyncCallbackData();
             data.Process = process;
-            data.ProgressCallback = SetSubJobProgress;
-            data.VideoIndexChangeCallback = OnVideoIndexChange;
             process.StandardOutput.BaseStream.BeginRead(data.Buffer, 0, data.Buffer.Length, AsyncStdOutputReadCallback, data);
         }
 
@@ -111,10 +91,7 @@ namespace Uber.MmeMuxer
             var totalProcessed = ProcessedWorkLoad + subJobProcessed;
             var jobProgress = 100.0 * (totalProcessed / (double)TotalWorkLoad);
 
-            if(JobProgressCallback != null)
-            {
-                JobProgressCallback(jobProgress);
-            }
+            UmmApp.Instance.SetCurrentJobProgress(jobProgress);
         }
 
         protected virtual void OnVideoIndexChange(int videoIndex)
@@ -124,7 +101,7 @@ namespace Uber.MmeMuxer
         private void AsyncStdOutputReadCallback(IAsyncResult result)
         {
             var data = result.AsyncState as AsyncCallbackData;
-            if(data == null || data.Process == null || data.ProgressCallback == null)
+            if(data == null || data.Process == null)
             {
                 return;
             }
@@ -137,6 +114,12 @@ namespace Uber.MmeMuxer
             var progressMatch = UmmApp.MEncoderProgressRegEx.Match(text);
             if(progressMatch.Success)
             {
+                if(!_firstProgressRead)
+                {
+                    UmmApp.Instance.SetJobAsStarted();
+                    _firstProgressRead = true;
+                }
+
                 var progressString = progressMatch.Groups[1].Captures[0].Value;
                 var progress = 0;
                 if(int.TryParse(progressString, out progress))
@@ -144,39 +127,33 @@ namespace Uber.MmeMuxer
                     if(progress < _previousProgress)
                     {
                         ++ProcessedVideoIndex;
-                        data.VideoIndexChangeCallback(ProcessedVideoIndex);
+                        UmmApp.Instance.SetCurrentSubJobFrameIndex(ProcessedVideoIndex);
                     }
                     _previousProgress = progress;
-                    
-                    data.ProgressCallback((double)progress);
+
+                    UmmApp.Instance.SetCurrentJobProgress((double)progress);
                 }
             }
 
-            if(JobFrameRateCallback != null)
+            var frameRateMatch = UmmApp.MEncoderFrameRateRegEx.Match(text);
+            if(frameRateMatch.Success)
             {
-                var frameRateMatch = UmmApp.MEncoderFrameRateRegEx.Match(text);
-                if(frameRateMatch.Success)
+                var frameRateString = frameRateMatch.Groups[1].Captures[0].Value + "." + frameRateMatch.Groups[2].Captures[0].Value;
+                var frameRate = 0.0;
+                if(double.TryParse(frameRateString, out frameRate))
                 {
-                    var frameRateString = frameRateMatch.Groups[1].Captures[0].Value + "." + frameRateMatch.Groups[2].Captures[0].Value;
-                    var frameRate = 0.0;
-                    if(double.TryParse(frameRateString, out frameRate))
-                    {
-                        JobFrameRateCallback(frameRate);
-                    }
+                    UmmApp.Instance.SetCurrentSubJobFrameRate(frameRate);
                 }
             }
 
-            if(JobFrameIndexCallback != null)
+            var frameIndexMatch = UmmApp.MEncoderFrameIndexRegEx.Match(text);
+            if(frameIndexMatch.Success)
             {
-                var frameIndexMatch = UmmApp.MEncoderFrameIndexRegEx.Match(text);
-                if(frameIndexMatch.Success)
+                var frameIndexString = frameIndexMatch.Groups[1].Captures[0].Value;
+                var frameIndex = 0;
+                if(int.TryParse(frameIndexString, out frameIndex))
                 {
-                    var frameIndexString = frameIndexMatch.Groups[1].Captures[0].Value;
-                    var frameIndex = 0;
-                    if(int.TryParse(frameIndexString, out frameIndex))
-                    {
-                        JobFrameIndexCallback(frameIndex);
-                    }
+                    UmmApp.Instance.SetCurrentSubJobFrameIndex(frameIndex);
                 }
             }
 
@@ -211,7 +188,6 @@ namespace Uber.MmeMuxer
         {
             var data = new AsyncCallbackData();
             data.Process = process;
-            data.ProgressCallback = JobProgressCallback;
             process.StandardError.BaseStream.BeginRead(data.Buffer, 0, data.Buffer.Length, AsyncErrOutputReadCallback, data);
         }
 
@@ -241,24 +217,16 @@ namespace Uber.MmeMuxer
             }
         }
 
-        protected void ReadProcessOutputUntilDone(Process process, bool readProgress = true)
+        protected void ReadProcessOutputUntilDone(Process process)
         {
             //
             // Start reader threads.
             //
-            Thread stdOutputReaderThread = null;
-            if(JobProgressCallback != null && readProgress)
-            {
-                stdOutputReaderThread = new Thread(ProcessStdOutputReadingThread);
-                stdOutputReaderThread.Start(process);
-            }
+            var stdOutputReaderThread = new Thread(ProcessStdOutputReadingThread);
+            stdOutputReaderThread.Start(process);
 
-            Thread stdErrorReaderThread = null;
-            if(readProgress)
-            {
-                stdErrorReaderThread = new Thread(ProcessErrOutputReadingThread);
-                stdErrorReaderThread.Start(process);
-            }
+            var stdErrorReaderThread = new Thread(ProcessErrOutputReadingThread);
+            stdErrorReaderThread.Start(process);
 
             Thread.Sleep(1000);
 
@@ -326,29 +294,26 @@ namespace Uber.MmeMuxer
 
         private const string TempFileName = "temp.avi";
         
-        public AviSequenceEncodeJob(string folderPath, string videoFilePath, string audioFilePath, ProgressDelegate progressCallback, FrameRateDelegate fpsCallback, FrameIndexDelegate frameCallback)
+        public AviSequenceEncodeJob(string folderPath, string videoFilePath, string audioFilePath)
         {
             _folderMode = folderPath != null;
             _folderPath = folderPath;
             _videoFilePath = videoFilePath;
             _audioFilePath = audioFilePath;
             _aviHasAudio = false;
-            JobProgressCallback = progressCallback;
-            JobFrameRateCallback = fpsCallback;
-            JobFrameIndexCallback = frameCallback;
             IsValid = false;
             HasAudio = audioFilePath != null;
             FrameCount = 0;
         }
 
-        public static AviSequenceEncodeJob FromFile(string videoFilePath, ProgressDelegate progressCallback = null, FrameRateDelegate fpsCallback = null, FrameIndexDelegate frameCallback = null)
+        public static AviSequenceEncodeJob FromFile(string videoFilePath)
         {
-            return new AviSequenceEncodeJob(null, videoFilePath, null, progressCallback, fpsCallback, frameCallback);
+            return new AviSequenceEncodeJob(null, videoFilePath, null);
         }
 
-        public static AviSequenceEncodeJob FromFolder(string folderPath, ProgressDelegate progressCallback = null, FrameRateDelegate fpsCallback = null, FrameIndexDelegate frameCallback = null)
+        public static AviSequenceEncodeJob FromFolder(string folderPath)
         {
-            return new AviSequenceEncodeJob(folderPath, null, null, progressCallback, fpsCallback, frameCallback);
+            return new AviSequenceEncodeJob(folderPath, null, null);
         }
 
         public void Analyze()
@@ -624,12 +589,9 @@ namespace Uber.MmeMuxer
             get { return _imageSequences.Count; }
         }
 
-        public ImageSequenceEncodeJob(string folderPath, ProgressDelegate progressCallback = null, FrameRateDelegate fpsCallback = null, FrameIndexDelegate frameCallback = null)
+        public ImageSequenceEncodeJob(string folderPath)
         {
             _folderPath = folderPath;
-            JobProgressCallback = progressCallback;
-            JobFrameRateCallback = fpsCallback;
-            JobFrameIndexCallback = frameCallback;
             IsValid = false;
             HasAudio = false;
             FrameCount = 0;

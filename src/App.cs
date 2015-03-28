@@ -483,7 +483,7 @@ namespace Uber.MmeMuxer
             // Single video files.
             foreach(var filePath in filePaths)
             {
-                var job = AviSequenceEncodeJob.FromFile(filePath, SetCurrentJobProgress, SetCurrentSubJobFrameRate, SetCurrentSubJobFrameIndex);
+                var job = AviSequenceEncodeJob.FromFile(filePath);
                 job.Analyze();
                 if(!job.IsValid)
                 {
@@ -508,7 +508,7 @@ namespace Uber.MmeMuxer
             var rejectedFolderPaths = new List<string>();
             foreach(var folderPath in folderPaths)
             {
-                var job = new ImageSequenceEncodeJob(folderPath, SetCurrentJobProgress, SetCurrentSubJobFrameRate, SetCurrentSubJobFrameIndex);
+                var job = new ImageSequenceEncodeJob(folderPath);
                 job.AnalyzeFolder();
                 if(!job.IsValid)
                 {
@@ -532,7 +532,7 @@ namespace Uber.MmeMuxer
             // Video sequence folders.
             foreach(var folderPath in rejectedFolderPaths)
             {
-                var job = AviSequenceEncodeJob.FromFolder(folderPath, SetCurrentJobProgress, SetCurrentSubJobFrameRate, SetCurrentSubJobFrameIndex);
+                var job = AviSequenceEncodeJob.FromFolder(folderPath);
                 job.Analyze();
                 if(!job.IsValid)
                 {
