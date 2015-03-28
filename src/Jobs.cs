@@ -610,7 +610,7 @@ namespace Uber.MmeMuxer
             public readonly List<string> ImageFilePaths = new List<string>();
             public string ImageSequenceRegEx;
             public string ImageSequencePath;
-            public string OutputFileName;
+            public string FirstImageName;
             public bool Monochrome;
             public ImageType Type = ImageType.Normal;
         }
@@ -674,15 +674,13 @@ namespace Uber.MmeMuxer
             foreach(var sequence in _imageSequences)
             {
                 var config = UmmApp.Instance.GetConfig();
-                var parentFolderPath = Path.GetDirectoryName(_folderPath);
-                var folderName = Path.GetFileName(_folderPath);
-                var outputFilePath = Path.Combine(config.OutputAllFilesToSameFolder ? config.OutputFolderPath : parentFolderPath, sequence.OutputFileName);
+                
                 var args = new MEncoderArguments();
                 args.AviHasAudio = false;
                 args.ImageSequence = true;
                 args.InputAudioPath = HasAudio ? Path.GetFullPath(_audioFilePath) : null;
                 args.InputImagesPath = sequence.ImageSequencePath;
-                args.OutputFilePath = outputFilePath;
+                args.OutputFilePath = CreateOutputFilePath(sequence, config);
                 args.UseSeparateAudioFile = HasAudio && !sequence.Monochrome;
                 args.Monochrome = sequence.Monochrome;
 
@@ -707,9 +705,7 @@ namespace Uber.MmeMuxer
                 InitializeMEncoderErrorOutput();
 
                 var config = UmmApp.Instance.GetConfig();
-                var parentFolderPath = Path.GetDirectoryName(_folderPath);
-                var folderName = Path.GetFileName(_folderPath);
-                var outputFilePath = Path.Combine(config.OutputAllFilesToSameFolder ? config.OutputFolderPath : parentFolderPath, sequence.OutputFileName);
+                var outputFilePath = CreateOutputFilePath(sequence, config);
                 var args = new MEncoderArguments();
                 args.AviHasAudio = false;
                 args.ImageSequence = true;
@@ -778,6 +774,14 @@ namespace Uber.MmeMuxer
             return CreateOutputFileNameFromDirectory(fileName, imageType);
         }
 
+        private string CreateOutputFilePath(ImageSequence sequence, UmmConfig config)
+        {
+            var outputFileName = UmmApp.Instance.CreateOutputFileName(CreateOutputFileName(sequence.FirstImageName, sequence.Type));
+            var outputFilePath = Path.Combine(config.OutputAllFilesToSameFolder ? config.OutputFolderPath : Path.GetDirectoryName(_folderPath), outputFileName);
+
+            return outputFilePath;
+        }
+
         private string CreateOutputFileNameFromFile(string fileName, ImageType imageType)
         {
             var folderName = Path.GetFileName(_folderPath);
@@ -842,10 +846,10 @@ namespace Uber.MmeMuxer
                 var hasDepth = firstImageName.Contains(".depth.");
                 var hasStencil = firstImageName.Contains(".stencil.");
                 var sequenceType = hasDepth ? ImageType.Depth : (hasStencil ? ImageType.Stencil : ImageType.Normal);
+                sequence.FirstImageName = firstImageName;
                 sequence.ImageFilePaths.AddRange(imagePaths);
                 sequence.ImageSequencePath = CreateMEncoderSequenceString(firstImageName);
                 sequence.ImageSequenceRegEx = regExString;
-                sequence.OutputFileName = UmmApp.Instance.CreateOutputFileName(CreateOutputFileName(firstImageName, sequenceType));
                 sequence.Monochrome = hasDepth || hasStencil;
                 sequence.Type = sequenceType;
                 sequences.Add(sequence);
