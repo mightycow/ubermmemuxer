@@ -43,19 +43,21 @@ Use Cases
 
 Option: output all files to this folder?            | No
 ---------------------------------------------------------------------------------------------------------------------------------------------------
-Input: .avi                                         | Output: new .avi file in the same folder, named according to the "File Naming Rules" settings
-Input: folder with .avi file(s) and optional .wav   | Output: new .avi file in the parent folder, called $(input_folder_name).avi
-Input: folder with image file(s) and optional .wav  | Output: new .avi file in the parent folder, called $(input_folder_name).avi
-- if it has a depth sequence (*.depth.*.$(ext))     | - $(input_folder_name)_depth.avi, uses the "Monochrome Video CODEC" settings, has no sound
-- if it has a stencil sequence (*.stencil.*.$(ext)) | - $(input_folder_name)_stencil.avi, uses the "Monochrome Video CODEC" settings, has no sound
+Input: Single .avi file                             | Output: new .avi file in the same folder
+Input: folder with .avi file(s) and optional .wav   | Output: new .avi file in the parent folder
+Input: folder with image file(s) and optional .wav  | Output: new .avi file in the parent folder
+- if it has a depth sequence (*.depth.*.$(ext))     | - $(final_name).depth.avi, uses the "Monochrome Video CODEC" settings, has no sound
+- if it has a stencil sequence (*.stencil.*.$(ext)) | - $(final_name).stencil.avi, uses the "Monochrome Video CODEC" settings, has no sound
 
 Option: output all files to this folder?            | Yes
 -----------------------------------------------------------------------------------------------------------------------------------------------------
-Input: .avi                                         | Output: new .avi file in the custom folder, named according to the "File Naming Rules" settings
-Input: folder with .avi file(s) and optional .wav   | Output: new .avi file in the custom folder, called $(input_folder_name).avi
-Input: folder with image file(s) and optional .wav  | Output: new .avi file in the custom folder, called $(input_folder_name).avi
-- if it has a depth sequence (*.depth.*.$(ext))     | - $(input_folder_name)_depth.avi, using the "Monochrome Video CODEC" settings, has no sound
-- if it has a stencil sequence (*.stencil.*.$(ext)) | - $(input_folder_name)_stencil.avi, using the "Monochrome Video CODEC" settings, has no sound
+Input: .avi                                         | Output: new .avi file in the custom folder
+Input: folder with .avi file(s) and optional .wav   | Output: new .avi file in the custom folder
+Input: folder with image file(s) and optional .wav  | Output: new .avi file in the custom folder
+- if it has a depth sequence (*.depth.*.$(ext))     | - $(final_name).depth.avi, using the "Monochrome Video CODEC" settings, has no sound
+- if it has a stencil sequence (*.stencil.*.$(ext)) | - $(final_name).stencil.avi, using the "Monochrome Video CODEC" settings, has no sound
+
+All output files are named according to the "File Naming Rules" settings.
 
 ==================
 Settings Explained

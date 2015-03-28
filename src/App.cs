@@ -16,7 +16,7 @@ namespace Uber.MmeMuxer
 {
     public static class UmmVersion
     {
-        public static readonly string String = "0.1.1a";
+        public static readonly string String = "0.1.2";
     }
 
     public class MEncoderArguments
@@ -55,6 +55,7 @@ namespace Uber.MmeMuxer
         public string FileNamingRegExpMatch = "(.+)\\.(.+)";
         public string FileNamingRegExpReplacement = "$1_lag.avi";
         public int FramesToSkip = 2;
+        public bool FileNamingUseImageName = false;
     }
 
     public partial class UmmApp : AppBase<UmmConfig>
@@ -482,7 +483,7 @@ namespace Uber.MmeMuxer
             // Single video files.
             foreach(var filePath in filePaths)
             {
-                var job = AviSequenceEncodeJob.FromFile(filePath, SetCurrentJobProgress, SetCurrentSubJobFrameRate, SetCurrentSubJobFrameIndex);
+                var job = AviSequenceEncodeJob.FromFile(filePath);
                 job.Analyze();
                 if(!job.IsValid)
                 {
@@ -507,7 +508,7 @@ namespace Uber.MmeMuxer
             var rejectedFolderPaths = new List<string>();
             foreach(var folderPath in folderPaths)
             {
-                var job = new ImageSequenceEncodeJob(folderPath, SetCurrentJobProgress, SetCurrentSubJobFrameRate, SetCurrentSubJobFrameIndex);
+                var job = new ImageSequenceEncodeJob(folderPath);
                 job.AnalyzeFolder();
                 if(!job.IsValid)
                 {
@@ -531,7 +532,7 @@ namespace Uber.MmeMuxer
             // Video sequence folders.
             foreach(var folderPath in rejectedFolderPaths)
             {
-                var job = AviSequenceEncodeJob.FromFolder(folderPath, SetCurrentJobProgress, SetCurrentSubJobFrameRate, SetCurrentSubJobFrameIndex);
+                var job = AviSequenceEncodeJob.FromFolder(folderPath);
                 job.Analyze();
                 if(!job.IsValid)
                 {
@@ -555,6 +556,40 @@ namespace Uber.MmeMuxer
 
         private class JobsProcessThreadData
         {
+        }
+
+        private void OnSaveJobsToBatchFile()
+        {
+            if(_jobs.Count == 0)
+            {
+                LogWarning("No job in the list.");
+                return;
+            }
+
+            SaveConfig();
+
+            var saveFileDialog = new System.Windows.Forms.SaveFileDialog();
+            saveFileDialog.InitialDirectory = System.Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            saveFileDialog.Filter = "Windows batch file (*.cmd)|*.cmd";
+            saveFileDialog.FileName = "UMM_encode_job.cmd";
+            var success = saveFileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK;
+            saveFileDialog.Dispose();
+            if(!success)
+            {
+                return;
+            }
+
+            var fileStream = File.Open(saveFileDialog.FileName, FileMode.Create, FileAccess.Write);
+            var streamWriter = new StreamWriter(fileStream);
+            foreach(var job in _jobs)
+            {
+                job.SaveJobToBatchFile(streamWriter);
+            }
+
+            streamWriter.Close();
+            streamWriter.Dispose();
+            fileStream.Close();
+            fileStream.Dispose();
         }
 
         private void OnProcessJobs()
@@ -618,6 +653,7 @@ namespace Uber.MmeMuxer
             ColorCodecDialogShown = false;
             MonochromeCodecDialogShown = false;
 
+            _currentJobProgress = 0.0;
             SetProgressThreadSafe(0.0);
 
             TotalWorkLoad = 0;
@@ -655,6 +691,8 @@ namespace Uber.MmeMuxer
 
                 ProcessedWorkLoad += job.FrameCount;
                 var progress = 100.0 * (ProcessedWorkLoad / (double)TotalWorkLoad);
+
+                _currentJobProgress = 0.0;
                 SetProgressThreadSafe(progress);
             }
 
@@ -686,6 +724,27 @@ namespace Uber.MmeMuxer
             {
                 ColorCodecDialogShown = true;
             }
+        }
+
+        public void WriteTobatchFile(StreamWriter file, string workingDir, MEncoderArguments args)
+        {
+            workingDir = Path.GetFullPath(workingDir);
+            var arguments = CreateMEncoderArguments(workingDir, args);
+            var encoderPath = Path.GetFullPath(Config.MEncoderFilePath);
+            var stringBuilder = new StringBuilder();
+
+            // Set the current directory.
+            stringBuilder.Append("cd /D \"");
+            stringBuilder.Append(workingDir);
+            stringBuilder.AppendLine("\"");
+
+            // Invoke MEncoder.
+            stringBuilder.Append("\"");
+            stringBuilder.Append(encoderPath);
+            stringBuilder.Append("\" ");
+            stringBuilder.AppendLine(arguments);
+
+            file.Write(stringBuilder.ToString());
         }
 
         public ProcessStartInfo CreateMEncoderProcessStartInfo(string workingDir, MEncoderArguments args)

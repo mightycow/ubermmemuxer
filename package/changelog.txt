@@ -1,3 +1,11 @@
+0.1.2 (28.03.2015)
+ADD: Config option: image sequences output names can have the name of the image sequence or the parent directory's name
+ADD: Save to Batch: saves the job list as an equivalent and stand-alone .cmd Windows batch file
+CHG: Image sequences output names can now have the "Output File Naming Rules" applied to them
+FIX: The output file path of image sequences no longer gets generated at analysis time
+FIX: The progress timer starts after the first successful read of MEncoder's progress output to avoid the delay caused by showing the CODEC's settings dialog
+FIX: The average speed calculations (was using the total progress instead of the job's progress)
+
 0.1.1a (25.03.2015)
 ADD: Option to skip the first N frames (suggested by entik)
 FIX: The application could freeze when output and input input frame rate didn't match and error output was disabled

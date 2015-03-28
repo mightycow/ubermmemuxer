@@ -60,6 +60,15 @@ namespace Uber.MmeMuxer
             clearSuccessfulButton.Margin = new Thickness(5);
             clearSuccessfulButton.Click += (obj, args) => OnClearSuccessfulJobs();
 
+            var saveBatchButton = new Button();
+            saveBatchButton.HorizontalAlignment = HorizontalAlignment.Left;
+            saveBatchButton.VerticalAlignment = VerticalAlignment.Center;
+            saveBatchButton.Content = "Save to Batch...";
+            saveBatchButton.Width = ButtonWidth;
+            saveBatchButton.Height = ButtonHeight;
+            saveBatchButton.Margin = new Thickness(5);
+            saveBatchButton.Click += (obj, args) => OnSaveJobsToBatchFile();
+
             var goButton = new Button();
             goButton.HorizontalAlignment = HorizontalAlignment.Left;
             goButton.VerticalAlignment = VerticalAlignment.Center;
@@ -81,6 +90,8 @@ namespace Uber.MmeMuxer
             buttonPanel.Children.Add(clearSuccessfulButton);
             buttonPanel.Children.Add(new Separator() { Margin = new Thickness(5) });
             buttonPanel.Children.Add(removeButton);
+            buttonPanel.Children.Add(new Separator() { Margin = new Thickness(5) } );
+            buttonPanel.Children.Add(saveBatchButton);
             buttonPanel.Children.Add(new Separator() { Margin = new Thickness(5) } );
             buttonPanel.Children.Add(goButton);
 
