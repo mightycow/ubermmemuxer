@@ -740,12 +740,7 @@ namespace Uber.MmeMuxer
 
         private string CreateOutputFileNameFromFile(string fileName, ImageType imageType)
         {
-            var folderName = Path.GetFileName(_folderPath);
-            var fileNameNoExt = Path.GetFileNameWithoutExtension(fileName);
-            var fixedFileNameWithBadExt = UmmApp.MEncoderSequenceMatchRegEx.Replace(fileName, "").Replace("..", ".");
-            var fixedFileNameNoExt = Path.GetFileNameWithoutExtension(fixedFileNameWithBadExt);
-
-            return fixedFileNameNoExt + ".avi";
+            return UmmApp.MMESequenceMatchRegEx.Replace(fileName, UmmApp.MMESequenceReplacement) + ".avi";
         }
 
         private string CreateOutputFileNameFromDirectory(string fileName, ImageType imageType)

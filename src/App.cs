@@ -69,6 +69,9 @@ namespace Uber.MmeMuxer
         public static readonly Regex MEncoderSequenceMatchRegEx = new Regex(@"\d+", RegexOptions.Compiled);
         public static readonly string MEncoderSequenceReplacement = "*";
 
+        public static readonly Regex MMESequenceMatchRegEx = new Regex(@"(.+)\.(\d+)\.(tga|bmp|png|jpg|jpeg)", RegexOptions.Compiled);
+        public static readonly string MMESequenceReplacement = "$1";
+
         // MEncoder progress format: "( 1%)" --> "(99%)".
         public static readonly Regex MEncoderProgressRegEx = new Regex(@"\( ?(\d+)%\)", RegexOptions.Compiled);
 
