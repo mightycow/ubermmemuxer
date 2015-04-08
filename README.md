@@ -17,20 +17,31 @@ It doesn't need any installation, you can extract it anywhere (even in **Program
 Only the version described as **for 32-bit Windows** will work with **VFW** codecs, so you should grab that one.  
 You can find the [Windows builds here](http://mplayerwin.sourceforge.net/downloads.html).
 
-If you want to use a **VFW** codec (like Lagarith, for instance), you have to copy the .dll file(s) to **$(MPlayer_folder)\codecs**.
+If you want to use a **VFW** codec (like *Lagarith*, for instance), you have to copy the .dll file(s) to **$(MPlayer_folder)\codecs** and make sure you have the 32-bit version of **MEncoder**.
 
 UMM itself creates a `Config.xml` settings file right next to the executable so it's best to:
+
 1. Have UMM in its own folder, so that `Config.xml` stays with the executable.
 2. Not have UMM in **Program Files** or **Program Files (x86)**
 
-Setting up
-----------
+Once you have UMM and MEncoder extracted into their respective folders:
 
-Open up UMM.exe and navigate to the `Settings` tab.  
-Under `General Settings`, make sure you fill in the `MEncoder Path` text box with the file path to your *MEncoder.exe*.
+1. Open up UMM.exe and navigate to the `Settings` tab.
+2. Under `General Settings`, make sure you fill in the `MEncoder Path` text box with the file path to your *MEncoder.exe*.
 
-Use Cases
----------
+Typical UMM usage scenario
+--------------------------
+
+The typical day-to-day usage scenario for UMM, assuming it's been set up properly:
+
+1. Render some demos with **q3mme**.
+2. Drag'n'drop the content of **q3mme**'s `capture` folder into UMM.
+3. Click `Go!`.
+4. If necessary, move and/or rename some of the output .avi files to their final location.
+5. You can now import the video files into your preferred video editing tool and work on that cool movie of yours.
+
+Supported input formats
+-----------------------
 
 | Input format                                      | File name                 | COP<sup>[1]</sup>: off | COP<sup>[1]</sup>: on | CODEC used | Audio?
 |:--------------------------------------------------|:--------------------------|:-------------------|:------------------|:-----------|:------------
@@ -39,7 +50,7 @@ Use Cases
 | **3)**  Folder with image file(s) + optional .wav | $(final_name).avi         | Parent | Custom | Color      | If available
 | **3) a)** if matches (*.depth.*.$(ext))           | $(final_name).depth.avi   | Parent | Custom | Monochrome | No
 | **3) b)** if matches (*.stencil.*.$(ext))         | $(final_name).stencil.avi | Parent | Custom | Monochrome | No
-1. COP is Custom Output Folder, see `Output all files to this foler` under `General Settings`
+1. COP: Custom Output Folder --- see `Output all files to this foler` under `General Settings`
 
 All output files (marked as `$(final_name)` above) are named according to the `File Naming Rules` settings.
 
