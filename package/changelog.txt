@@ -1,3 +1,8 @@
+0.1.2a (09.04.2015)
+FIX: When using the image sequence's name, the output name would be incorrectly stripped off all digits
+ADD: An option to rename files to avoid overwrites
+CHG: The help will open the improved README, hosted online at GitHub
+
 0.1.2 (28.03.2015)
 ADD: Config option: image sequences output names can have the name of the image sequence or the parent directory's name
 ADD: Save to Batch: saves the job list as an equivalent and stand-alone .cmd Windows batch file

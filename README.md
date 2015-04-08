@@ -1,10 +1,12 @@
 # [UMM](https://github.com/mightycow/ubermmemuxer) - Uber MME Muxer
 
-Purpose
--------
-
 UMM is used to simplify the batch processing of video and image sequences that are output by [**Q3MME**](http://q3mme.proboards.com/) (**Quake 3 Movie-Maker Edition**).  
 It allows you to mux all of the output into .avi files with audio (when available).
+
+Official UMM binaries
+---------------------
+
+[Grab them here](http://giant.pourri.ch/snif.php?path=UMM/).
 
 Installation
 ------------
