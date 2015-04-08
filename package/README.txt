@@ -35,7 +35,7 @@ Setting up
 ==========
 
 Open up UMM.exe and navigate to the "Settings" tab.
-Under "General Settings", make sure you fill in the "MEncoder Path" text box (the file path of mencoder.exe).
+Under "General Settings", make sure you fill in the "MEncoder Path" text box with the file path to MEncoder.exe.
 
 =========
 Use Cases
