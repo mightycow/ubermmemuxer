@@ -181,9 +181,9 @@ namespace Uber.MmeMuxer
             Log = log;
 
             var viewHelpMenuItem = new MenuItem();
-            viewHelpMenuItem.Header = "View Help";
+            viewHelpMenuItem.Header = "View Online Help";
             viewHelpMenuItem.Click += (obj, arg) => ViewHelp();
-            viewHelpMenuItem.ToolTip = new ToolTip { Content = "Opens README.txt with your current text editor" };
+            viewHelpMenuItem.ToolTip = new ToolTip { Content = "Opens a new tab with the help in your default web browser" };
 
             var aboutMenuItem = new MenuItem();
             aboutMenuItem.Header = "_About Uber MME Muxer";

@@ -101,6 +101,6 @@ License
 -------
 
 The entire source code in this release is covered by the GPL.  
-See [COPYING.txt](@TODO:) for the GNU GENERAL PUBLIC LICENSE.
+See [COPYING.txt](https://github.com/mightycow/ubermmemuxer/blob/master/COPYING.txt) for the GNU GENERAL PUBLIC LICENSE.
 
 Uber MME Muxer (UMM) is Copyright (C) 2013-2015 Gian 'myT' Schellenbaum.

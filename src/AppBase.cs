@@ -112,9 +112,7 @@ namespace Uber
         {
             try
             {
-                var exeDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                var helpPath = Path.Combine(exeDir, "README.txt");
-                Process.Start(helpPath);
+                Process.Start(@"https://github.com/mightycow/ubermmemuxer/blob/develop/README.md");
             }
             catch(Exception exception)
             {
