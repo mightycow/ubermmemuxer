@@ -497,6 +497,7 @@ namespace Uber.MmeMuxer
             var inputFolderPath = Path.GetDirectoryName(_videoFilePath);
             var outputFileName = UmmApp.Instance.CreateOutputFileName(inputFileName);
             outputFilePath = Path.Combine(config.OutputAllFilesToSameFolder ? config.OutputFolderPath : inputFolderPath, outputFileName);
+            outputFilePath = UmmApp.Instance.ValidateAndFixOutputFilePath(outputFilePath);
 
             return outputFilePath;
         }
@@ -734,6 +735,7 @@ namespace Uber.MmeMuxer
         {
             var outputFileName = UmmApp.Instance.CreateOutputFileName(CreateOutputFileName(sequence.FirstImageName, sequence.Type));
             var outputFilePath = Path.Combine(config.OutputAllFilesToSameFolder ? config.OutputFolderPath : Path.GetDirectoryName(_folderPath), outputFileName);
+            outputFilePath = UmmApp.Instance.ValidateAndFixOutputFilePath(outputFilePath);
 
             return outputFilePath;
         }

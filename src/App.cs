@@ -56,6 +56,7 @@ namespace Uber.MmeMuxer
         public string FileNamingRegExpReplacement = "$1_lag.avi";
         public int FramesToSkip = 2;
         public bool FileNamingUseImageName = false;
+        public bool FileOverwriteAllow = false;
     }
 
     public partial class UmmApp : AppBase<UmmConfig>
@@ -100,6 +101,8 @@ namespace Uber.MmeMuxer
         private ListView _jobsListView;
         private Brush _jobsListViewBackground;
         private List<EncodeJob> _jobs = new List<EncodeJob>();
+
+        private readonly List<string> _outputFilePaths = new List<string>();
 
         private static RoutedCommand _deleteFolderCommand = new RoutedCommand();
 
@@ -659,6 +662,8 @@ namespace Uber.MmeMuxer
             _currentJobProgress = 0.0;
             SetProgressThreadSafe(0.0);
 
+            ClearOutputFilePaths();
+
             TotalWorkLoad = 0;
             for(var i = 0; i < _jobs.Count; ++i)
             {
@@ -941,6 +946,34 @@ namespace Uber.MmeMuxer
             }
 
             return sourceFileName;
+        }
+
+        public void ClearOutputFilePaths()
+        {
+            _outputFilePaths.Clear();
+        }
+
+        public string ValidateAndFixOutputFilePath(string filePath)
+        {
+            if(Config.FileOverwriteAllow)
+            {
+                _outputFilePaths.Add(filePath.ToLower());
+
+                return filePath;
+            }
+
+            var result = filePath;
+            var exists = File.Exists(result) || _outputFilePaths.Contains(result.ToLower());
+            if(exists)
+            {
+                var name = Path.GetFileNameWithoutExtension(result);
+                var dir = Path.GetDirectoryName(result);
+                result = Path.Combine(dir, name + "_" + Path.GetRandomFileName() + ".avi");
+            }
+
+            _outputFilePaths.Add(result.ToLower());
+
+            return result;
         }
 
         public bool IsMEncoderPathValid(string mEncoderFilePath, bool fileNameSuggestion = false)
