@@ -171,8 +171,7 @@ namespace Uber.MmeMuxer
                 codec = VideoCodec.Copy;
                 foreach(var codecSettings in _allCodecs)
                 {
-                    var button = codecSettings.Button;
-                    if(button.IsChecked.HasValue && button.IsChecked.Value)
+                    if(codecSettings.Button.IsChecked ?? false)
                     {
                         codec = codecSettings.Codec;
                         break;
@@ -181,7 +180,7 @@ namespace Uber.MmeMuxer
 
                 customOptionsLavc = CustomCodecs[0].EditBox.Text;
                 customNameVfw = CustomCodecs[1].EditBox.Text;
-                showCodecDialog = ShowCodecDialogCheckBox.IsChecked.HasValue && ShowCodecDialogCheckBox.IsChecked.Value;
+                showCodecDialog = ShowCodecDialogCheckBox.IsChecked ?? false;
             }
         }
 
@@ -220,6 +219,9 @@ namespace Uber.MmeMuxer
         // Image sequence file naming.
         private RadioButton _fileNamingUseImageNameRadioButton;
 
+        // Output file overwrite.
+        private RadioButton _fileOverwriteAllowRadioButton;
+
         private FrameworkElement CreateSettingsTab()
         {
             _colorCodecSettings.Title = "Color Video CODEC";
@@ -238,6 +240,7 @@ namespace Uber.MmeMuxer
             var generalGroupBox = CreateGeneralSettingsGui();
             var fileNamingGroupBox = CreateFileNamingRulesGui();
             var fileNamingSequenceGroupBox = CreateSequenceNamingRulesGui();
+            var fileOverwriteGroupBox = CreateFileOverwriteRulesGui();
 
             var wrapPanel = new WrapPanel();
             wrapPanel.HorizontalAlignment = HorizontalAlignment.Stretch;
@@ -249,6 +252,7 @@ namespace Uber.MmeMuxer
             wrapPanel.Children.Add(generalGroupBox);
             wrapPanel.Children.Add(fileNamingSequenceGroupBox);
             wrapPanel.Children.Add(fileNamingGroupBox);
+            wrapPanel.Children.Add(fileOverwriteGroupBox);
 
             var scrollViewer = new ScrollViewer();
             scrollViewer.HorizontalAlignment = HorizontalAlignment.Stretch;
@@ -413,8 +417,8 @@ namespace Uber.MmeMuxer
             generalStackPanel.Children.Add(outputFolderStackPanel);
 
             var generalGroupBox = new GroupBox();
-            generalGroupBox.HorizontalAlignment = HorizontalAlignment.Stretch;
-            generalGroupBox.VerticalAlignment = VerticalAlignment.Stretch;
+            generalGroupBox.HorizontalAlignment = HorizontalAlignment.Left;
+            generalGroupBox.VerticalAlignment = VerticalAlignment.Top;
             generalGroupBox.Margin = new Thickness(5);
             generalGroupBox.Header = "General Settings";
             generalGroupBox.Content = generalStackPanel;
@@ -502,8 +506,8 @@ namespace Uber.MmeMuxer
             fileNamingStackPanel.Children.Add(WpfHelper.CreateRow(regExRow, 100, 0, 0));
 
             var fileNamingGroupBox = new GroupBox();
-            fileNamingGroupBox.HorizontalAlignment = HorizontalAlignment.Stretch;
-            fileNamingGroupBox.VerticalAlignment = VerticalAlignment.Stretch;
+            fileNamingGroupBox.HorizontalAlignment = HorizontalAlignment.Left;
+            fileNamingGroupBox.VerticalAlignment = VerticalAlignment.Top;
             fileNamingGroupBox.Margin = new Thickness(5);
             fileNamingGroupBox.Header = "Output File Naming Rules";
             fileNamingGroupBox.Content = fileNamingStackPanel;
@@ -541,8 +545,8 @@ namespace Uber.MmeMuxer
             fileNamingStackPanel.Children.Add(useFileRadioButton);
 
             var fileNamingGroupBox = new GroupBox();
-            fileNamingGroupBox.HorizontalAlignment = HorizontalAlignment.Stretch;
-            fileNamingGroupBox.VerticalAlignment = VerticalAlignment.Stretch;
+            fileNamingGroupBox.HorizontalAlignment = HorizontalAlignment.Left;
+            fileNamingGroupBox.VerticalAlignment = VerticalAlignment.Top;
             fileNamingGroupBox.Margin = new Thickness(5);
             fileNamingGroupBox.Header = "Image Sequence File Naming Rules";
             fileNamingGroupBox.Content = fileNamingStackPanel;
@@ -550,9 +554,48 @@ namespace Uber.MmeMuxer
             return fileNamingGroupBox;
         }
 
+        private FrameworkElement CreateFileOverwriteRulesGui()
+        {
+            var margin = new Thickness(5, 5, 5, 0);
+
+            var allowRadioButton = new RadioButton();
+            _fileOverwriteAllowRadioButton = allowRadioButton;
+            allowRadioButton.HorizontalAlignment = HorizontalAlignment.Left;
+            allowRadioButton.VerticalAlignment = VerticalAlignment.Center;
+            allowRadioButton.Margin = margin;
+            allowRadioButton.Content = "Allow output file overwrites";
+            allowRadioButton.GroupName = "Output File Overwrite Rules";
+            allowRadioButton.IsChecked = Config.FileOverwriteAllow;
+
+            var addUniqueSuffixRadioButton = new RadioButton();
+            addUniqueSuffixRadioButton.HorizontalAlignment = HorizontalAlignment.Left;
+            addUniqueSuffixRadioButton.VerticalAlignment = VerticalAlignment.Center;
+            addUniqueSuffixRadioButton.Margin = margin;
+            addUniqueSuffixRadioButton.Content = "Append a unique randonly generated suffix";
+            addUniqueSuffixRadioButton.GroupName = "Output File Overwrite Rules";
+            addUniqueSuffixRadioButton.IsChecked = !Config.FileOverwriteAllow;
+
+            var fileOverwriteStackPanel = new StackPanel();
+            fileOverwriteStackPanel.HorizontalAlignment = HorizontalAlignment.Stretch;
+            fileOverwriteStackPanel.VerticalAlignment = VerticalAlignment.Stretch;
+            fileOverwriteStackPanel.Margin = new Thickness(5);
+            fileOverwriteStackPanel.Orientation = Orientation.Vertical;
+            fileOverwriteStackPanel.Children.Add(allowRadioButton);
+            fileOverwriteStackPanel.Children.Add(addUniqueSuffixRadioButton);
+
+            var fileOverwriteGroupBox = new GroupBox();
+            fileOverwriteGroupBox.HorizontalAlignment = HorizontalAlignment.Left;
+            fileOverwriteGroupBox.VerticalAlignment = VerticalAlignment.Top;
+            fileOverwriteGroupBox.Margin = new Thickness(5);
+            fileOverwriteGroupBox.Header = "Output File Overwrite Rules";
+            fileOverwriteGroupBox.Content = fileOverwriteStackPanel;
+
+            return fileOverwriteGroupBox;
+        }
+
         private void OnOutputAllFilesToSameFolderChecked()
         {
-            _outputFolderTextBox.IsEnabled = _outputAllFilesToSameFolderCheckBox.IsChecked.HasValue && _outputAllFilesToSameFolderCheckBox.IsChecked.Value;
+            _outputFolderTextBox.IsEnabled = _outputAllFilesToSameFolderCheckBox.IsChecked ?? false;
         }
 
         private void OnOutputFolderBrowse()
@@ -625,9 +668,10 @@ namespace Uber.MmeMuxer
             int.TryParse(_inputFrameRateEditBox.Text, out Config.FrameRate);
             int.TryParse(_outputFrameRateEditBox.Text, out Config.OutputFrameRate);
             int.TryParse(_framesToSkipEditBox.Text, out Config.FramesToSkip);
-            Config.DisplayMEncoderStdErr = _displayMEncoderStdErrCheckBox.IsChecked.HasValue && _displayMEncoderStdErrCheckBox.IsChecked.Value;
-            Config.OutputAllFilesToSameFolder = _outputAllFilesToSameFolderCheckBox.IsChecked.HasValue && _outputAllFilesToSameFolderCheckBox.IsChecked.Value;
+            Config.DisplayMEncoderStdErr = _displayMEncoderStdErrCheckBox.IsChecked ?? false;
+            Config.OutputAllFilesToSameFolder = _outputAllFilesToSameFolderCheckBox.IsChecked ?? false;
             Config.OutputFolderPath = _outputFolderTextBox.Text;
+            Config.FileOverwriteAllow = _fileOverwriteAllowRadioButton.IsChecked ?? false;
         }
 
         private void LoadGeneralSettings()
@@ -639,6 +683,7 @@ namespace Uber.MmeMuxer
             _displayMEncoderStdErrCheckBox.IsChecked = Config.DisplayMEncoderStdErr;
             _outputAllFilesToSameFolderCheckBox.IsChecked = Config.OutputAllFilesToSameFolder;
             _outputFolderTextBox.Text = Config.OutputFolderPath;
+            _fileOverwriteAllowRadioButton.IsChecked = Config.FileOverwriteAllow;
             OnOutputAllFilesToSameFolderChecked();
         }
 
@@ -647,8 +692,7 @@ namespace Uber.MmeMuxer
             var method = FileNamingMethod.NoChange;
             foreach(var option in _fileNamingOptions)
             {
-                var button = option.Button;
-                if(button.IsChecked.HasValue && button.IsChecked.Value)
+                if(option.Button.IsChecked ?? false)
                 {
                     method = option.Method;
                     break;

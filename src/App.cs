@@ -16,7 +16,7 @@ namespace Uber.MmeMuxer
 {
     public static class UmmVersion
     {
-        public static readonly string String = "0.1.2";
+        public static readonly string String = "0.1.2a";
     }
 
     public class MEncoderArguments
@@ -56,6 +56,7 @@ namespace Uber.MmeMuxer
         public string FileNamingRegExpReplacement = "$1_lag.avi";
         public int FramesToSkip = 2;
         public bool FileNamingUseImageName = false;
+        public bool FileOverwriteAllow = false;
     }
 
     public partial class UmmApp : AppBase<UmmConfig>
@@ -68,6 +69,9 @@ namespace Uber.MmeMuxer
 
         public static readonly Regex MEncoderSequenceMatchRegEx = new Regex(@"\d+", RegexOptions.Compiled);
         public static readonly string MEncoderSequenceReplacement = "*";
+
+        public static readonly Regex MMESequenceMatchRegEx = new Regex(@"(.+)\.(\d+)\.(tga|bmp|png|jpg|jpeg)", RegexOptions.Compiled);
+        public static readonly string MMESequenceReplacement = "$1";
 
         // MEncoder progress format: "( 1%)" --> "(99%)".
         public static readonly Regex MEncoderProgressRegEx = new Regex(@"\( ?(\d+)%\)", RegexOptions.Compiled);
@@ -97,6 +101,8 @@ namespace Uber.MmeMuxer
         private ListView _jobsListView;
         private Brush _jobsListViewBackground;
         private List<EncodeJob> _jobs = new List<EncodeJob>();
+
+        private readonly List<string> _outputFilePaths = new List<string>();
 
         private static RoutedCommand _deleteFolderCommand = new RoutedCommand();
 
@@ -175,9 +181,9 @@ namespace Uber.MmeMuxer
             Log = log;
 
             var viewHelpMenuItem = new MenuItem();
-            viewHelpMenuItem.Header = "View Help";
+            viewHelpMenuItem.Header = "View Online Help";
             viewHelpMenuItem.Click += (obj, arg) => ViewHelp();
-            viewHelpMenuItem.ToolTip = new ToolTip { Content = "Opens README.txt with your current text editor" };
+            viewHelpMenuItem.ToolTip = new ToolTip { Content = "Opens a new tab with the help in your default web browser" };
 
             var aboutMenuItem = new MenuItem();
             aboutMenuItem.Header = "_About Uber MME Muxer";
@@ -656,6 +662,8 @@ namespace Uber.MmeMuxer
             _currentJobProgress = 0.0;
             SetProgressThreadSafe(0.0);
 
+            ClearOutputFilePaths();
+
             TotalWorkLoad = 0;
             for(var i = 0; i < _jobs.Count; ++i)
             {
@@ -938,6 +946,34 @@ namespace Uber.MmeMuxer
             }
 
             return sourceFileName;
+        }
+
+        public void ClearOutputFilePaths()
+        {
+            _outputFilePaths.Clear();
+        }
+
+        public string ValidateAndFixOutputFilePath(string filePath)
+        {
+            if(Config.FileOverwriteAllow)
+            {
+                _outputFilePaths.Add(filePath.ToLower());
+
+                return filePath;
+            }
+
+            var result = filePath;
+            var exists = File.Exists(result) || _outputFilePaths.Contains(result.ToLower());
+            if(exists)
+            {
+                var name = Path.GetFileNameWithoutExtension(result);
+                var dir = Path.GetDirectoryName(result);
+                result = Path.Combine(dir, name + "_" + Path.GetRandomFileName() + ".avi");
+            }
+
+            _outputFilePaths.Add(result.ToLower());
+
+            return result;
         }
 
         public bool IsMEncoderPathValid(string mEncoderFilePath, bool fileNameSuggestion = false)

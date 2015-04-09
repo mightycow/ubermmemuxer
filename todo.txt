@@ -1,24 +1,3 @@
 To do:
 - Help in the GUI?
-- Balloon tips?
-- Output folder selection rules?
-- Thread-safe progress management?
-
-=================================================
-deprecated
--------------------------------------------------
-Cases:
-a) single .avi file or a folder with a single .avi file and an optional .wav file
-b) folder with image sequences and an optional .wav file
-c) folder with several .avi files and optional .wav file
-Re-arrange that? How to select output folder in case a) ?!
-=================================================
-
-=================================================
-in use
--------------------------------------------------
-Cases:
-a) folder with 1+ image sequence and an optional .wav file
-b) folder with 1+ .avi files and an optional .wav file OR a single .avi file
-That way maybe? Keeps the code simpler I guess.
-=================================================
+- More balloon tips?

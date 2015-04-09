@@ -497,6 +497,7 @@ namespace Uber.MmeMuxer
             var inputFolderPath = Path.GetDirectoryName(_videoFilePath);
             var outputFileName = UmmApp.Instance.CreateOutputFileName(inputFileName);
             outputFilePath = Path.Combine(config.OutputAllFilesToSameFolder ? config.OutputFolderPath : inputFolderPath, outputFileName);
+            outputFilePath = UmmApp.Instance.ValidateAndFixOutputFilePath(outputFilePath);
 
             return outputFilePath;
         }
@@ -734,18 +735,14 @@ namespace Uber.MmeMuxer
         {
             var outputFileName = UmmApp.Instance.CreateOutputFileName(CreateOutputFileName(sequence.FirstImageName, sequence.Type));
             var outputFilePath = Path.Combine(config.OutputAllFilesToSameFolder ? config.OutputFolderPath : Path.GetDirectoryName(_folderPath), outputFileName);
+            outputFilePath = UmmApp.Instance.ValidateAndFixOutputFilePath(outputFilePath);
 
             return outputFilePath;
         }
 
         private string CreateOutputFileNameFromFile(string fileName, ImageType imageType)
         {
-            var folderName = Path.GetFileName(_folderPath);
-            var fileNameNoExt = Path.GetFileNameWithoutExtension(fileName);
-            var fixedFileNameWithBadExt = UmmApp.MEncoderSequenceMatchRegEx.Replace(fileName, "").Replace("..", ".");
-            var fixedFileNameNoExt = Path.GetFileNameWithoutExtension(fixedFileNameWithBadExt);
-
-            return fixedFileNameNoExt + ".avi";
+            return UmmApp.MMESequenceMatchRegEx.Replace(fileName, UmmApp.MMESequenceReplacement) + ".avi";
         }
 
         private string CreateOutputFileNameFromDirectory(string fileName, ImageType imageType)
