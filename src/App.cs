@@ -104,8 +104,6 @@ namespace Uber.MmeMuxer
 
         private readonly List<string> _outputFilePaths = new List<string>();
 
-        private static RoutedCommand _deleteFolderCommand = new RoutedCommand();
-
         private enum VideoStreamType
         {
             Invalid,
@@ -267,7 +265,6 @@ namespace Uber.MmeMuxer
             jobsListView.Drop += OnMuxFolderListBoxDragDrop;
             jobsListView.Initialized += (obj, arg) => { _jobsListViewBackground = _jobsListView.Background; };
             jobsListView.Foreground = new SolidColorBrush(Colors.Black);
-            InitFolderListDeleteCommand();
 
             var jobsListGroupBox = new GroupBox();
             jobsListGroupBox.Header = "Jobs List";
@@ -355,28 +352,6 @@ namespace Uber.MmeMuxer
             }
 
             AddJobs(droppedFilePaths, droppedFolderPaths);
-        }
-
-        private void OnOpenMuxFolder()
-        {
-
-        }
-
-        private void OnRemoveFolderClicked()
-        {
-
-        }
-        
-        private void InitFolderListDeleteCommand()
-        {
-            var inputGesture = new KeyGesture(Key.Delete, ModifierKeys.None);
-            var inputBinding = new KeyBinding(_deleteFolderCommand, inputGesture);
-            var commandBinding = new CommandBinding();
-            commandBinding.Command = _deleteFolderCommand;
-            commandBinding.Executed += (obj, args) => OnRemoveFolderClicked();
-            commandBinding.CanExecute += (obj, args) => { args.CanExecute = true; };
-            _jobsListView.InputBindings.Add(inputBinding);
-            _jobsListView.CommandBindings.Add(commandBinding);
         }
 
         private void OnMuxFolderListBoxDragEnter(object sender, DragEventArgs e)
