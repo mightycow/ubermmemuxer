@@ -52,7 +52,7 @@ Supported input formats
 | **3)**  Folder with image file(s) + optional .wav | $(final_name).avi         | Parent | Custom | Color      | If available
 | **3) a)** if matches (*.depth.*.$(ext))           | $(final_name).depth.avi   | Parent | Custom | Monochrome | No
 | **3) b)** if matches (*.stencil.*.$(ext))         | $(final_name).stencil.avi | Parent | Custom | Monochrome | No
-1. COP: Custom Output Folder --- see `Output all files to this foler` under `General Settings`
+1. COP: Custom Output Folder &mdash; see `Output all files to this foler` under `General Settings`
 
 All output files (marked as `$(final_name)` above) are named according to the `File Naming Rules` settings.
 
