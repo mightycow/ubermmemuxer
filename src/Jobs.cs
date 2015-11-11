@@ -125,7 +125,7 @@ namespace Uber.MmeMuxer
                     }
                     _previousProgress = progress;
 
-                    UmmApp.Instance.SetCurrentJobProgress((double)progress);
+                    SetSubJobProgress((double)progress);
                 }
             }
 
