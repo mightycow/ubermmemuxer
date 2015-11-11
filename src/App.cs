@@ -578,7 +578,7 @@ namespace Uber.MmeMuxer
             var info = new JobDisplayInfo();
             info.Job = job;
             info.Name = folderName;
-            info.VideoCount = 1;
+            info.VideoCount = job.SequenceCount;
             info.FrameCount = job.FrameCount;
             info.HasAudio = job.HasAudio;
 
