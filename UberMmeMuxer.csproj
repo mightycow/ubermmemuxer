@@ -58,6 +58,7 @@
     <Compile Include="src\Log.cs" />
     <Compile Include="src\Program.cs" />
     <Compile Include="src\Quotes.cs" />
+	<Compile Include="src\Reflex.cs" />
     <Compile Include="src\Serializer.cs" />
     <Compile Include="src\Shortcut.cs" />
     <Compile Include="src\WpfHelper.cs" />

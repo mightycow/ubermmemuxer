@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -78,32 +79,75 @@ namespace Uber.MmeMuxer
             goButton.Margin = new Thickness(5);
             goButton.Click += (obj, args) => OnProcessJobs();
 
-            var buttonPanel = new StackPanel();
-            buttonPanel.HorizontalAlignment = HorizontalAlignment.Left;
-            buttonPanel.VerticalAlignment = VerticalAlignment.Top;
-            buttonPanel.Margin = new Thickness(5);
-            buttonPanel.Orientation = Orientation.Vertical;
-            buttonPanel.Children.Add(addFilesButton);
-            buttonPanel.Children.Add(addFoldersButton);
-            buttonPanel.Children.Add(new Separator() { Margin = new Thickness(5) });
-            buttonPanel.Children.Add(clearButton);
-            buttonPanel.Children.Add(clearSuccessfulButton);
-            buttonPanel.Children.Add(new Separator() { Margin = new Thickness(5) });
-            buttonPanel.Children.Add(removeButton);
-            buttonPanel.Children.Add(new Separator() { Margin = new Thickness(5) } );
-            buttonPanel.Children.Add(saveBatchButton);
-            buttonPanel.Children.Add(new Separator() { Margin = new Thickness(5) } );
-            buttonPanel.Children.Add(goButton);
+            var jobButtonsPanel = new StackPanel();
+            jobButtonsPanel.HorizontalAlignment = HorizontalAlignment.Left;
+            jobButtonsPanel.VerticalAlignment = VerticalAlignment.Top;
+            jobButtonsPanel.Margin = new Thickness(5);
+            jobButtonsPanel.Orientation = Orientation.Vertical;
+            jobButtonsPanel.Children.Add(addFilesButton);
+            jobButtonsPanel.Children.Add(addFoldersButton);
+            jobButtonsPanel.Children.Add(new Separator() { Margin = new Thickness(5) });
+            jobButtonsPanel.Children.Add(clearButton);
+            jobButtonsPanel.Children.Add(clearSuccessfulButton);
+            jobButtonsPanel.Children.Add(new Separator() { Margin = new Thickness(5) });
+            jobButtonsPanel.Children.Add(removeButton);
+            jobButtonsPanel.Children.Add(new Separator() { Margin = new Thickness(5) } );
+            jobButtonsPanel.Children.Add(saveBatchButton);
+            jobButtonsPanel.Children.Add(new Separator() { Margin = new Thickness(5) } );
+            jobButtonsPanel.Children.Add(goButton);
 
-            var buttonGroup = new GroupBox();
-            buttonGroup.HorizontalAlignment = HorizontalAlignment.Left;
-            buttonGroup.VerticalAlignment = VerticalAlignment.Top;
-            buttonGroup.Margin = new Thickness(5);
-            buttonGroup.Header = "Actions";
-            buttonGroup.Content = buttonPanel;
+            var jobButtonsGroupBox = new GroupBox();
+            jobButtonsGroupBox.HorizontalAlignment = HorizontalAlignment.Left;
+            jobButtonsGroupBox.VerticalAlignment = VerticalAlignment.Top;
+            jobButtonsGroupBox.Margin = new Thickness(5);
+            jobButtonsGroupBox.Header = "Job Actions";
+            jobButtonsGroupBox.Content = jobButtonsPanel;
 
-            return buttonGroup;
-        }
+            var openReflexReplaysButton = new Button();
+            openReflexReplaysButton.HorizontalAlignment = HorizontalAlignment.Left;
+            openReflexReplaysButton.VerticalAlignment = VerticalAlignment.Center;
+            openReflexReplaysButton.Content = "Open Replays";
+            openReflexReplaysButton.ToolTip = "Open the replays folder in the file explorer";
+            openReflexReplaysButton.Width = ButtonWidth;
+            openReflexReplaysButton.Height = ButtonHeight;
+            openReflexReplaysButton.Margin = new Thickness(5);
+            openReflexReplaysButton.Click += (obj, args) => OnOpenReflexReplays();
+
+            var loadReflexReplaysButton = new Button();
+            loadReflexReplaysButton.HorizontalAlignment = HorizontalAlignment.Left;
+            loadReflexReplaysButton.VerticalAlignment = VerticalAlignment.Center;
+            loadReflexReplaysButton.Content = "Load Replays";
+            loadReflexReplaysButton.ToolTip = "Add up all Reflex replay folders to the jobs list";
+            loadReflexReplaysButton.Width = ButtonWidth;
+            loadReflexReplaysButton.Height = ButtonHeight;
+            loadReflexReplaysButton.Margin = new Thickness(5);
+            loadReflexReplaysButton.Click += (obj, args) => OnLoadReflexReplays();
+
+            var reflexButtonsPanel = new StackPanel();
+            reflexButtonsPanel.HorizontalAlignment = HorizontalAlignment.Left;
+            reflexButtonsPanel.VerticalAlignment = VerticalAlignment.Top;
+            reflexButtonsPanel.Margin = new Thickness(5);
+            reflexButtonsPanel.Orientation = Orientation.Vertical;
+            reflexButtonsPanel.Children.Add(openReflexReplaysButton);
+            reflexButtonsPanel.Children.Add(loadReflexReplaysButton);
+
+            var reflexButtonsGroupBox = new GroupBox();
+            reflexButtonsGroupBox.HorizontalAlignment = HorizontalAlignment.Left;
+            reflexButtonsGroupBox.VerticalAlignment = VerticalAlignment.Top;
+            reflexButtonsGroupBox.Margin = new Thickness(5);
+            reflexButtonsGroupBox.Header = "Reflex Actions";
+            reflexButtonsGroupBox.Content = reflexButtonsPanel;
+
+            var rootPanel = new StackPanel();
+            rootPanel.HorizontalAlignment = HorizontalAlignment.Stretch;
+            rootPanel.VerticalAlignment = VerticalAlignment.Stretch;
+            rootPanel.Margin = new Thickness(5);
+            rootPanel.Orientation = Orientation.Horizontal;
+            rootPanel.Children.Add(jobButtonsGroupBox);
+            rootPanel.Children.Add(reflexButtonsGroupBox);
+
+            return rootPanel;
+        }  
 
         private void OnRemoveJobs()
         {
@@ -199,6 +243,42 @@ namespace Uber.MmeMuxer
                 jobViews.RemoveAt(index);
                 _jobs.RemoveAt(index);
             }
+        }
+
+        private void OnOpenReflexReplays()
+        {
+            try
+            {
+                var replaysPath = Reflex.GetReflexReplaysFolder();
+                Process.Start(replaysPath);
+            }
+            catch(Exception)
+            {
+            }
+        }
+
+        private void OnLoadReflexReplays()
+        {
+            string replaysPath = null;
+            try
+            {
+                replaysPath = Reflex.GetReflexReplaysFolder();
+            }
+            catch(Exception)
+            {
+                return;
+            }
+
+            if(replaysPath == null)
+            {
+                return;
+            }
+
+            var allReplays = Directory.GetDirectories(replaysPath, "*", SearchOption.TopDirectoryOnly);
+            var allReplaysList = new List<string>();
+            allReplaysList.AddRange(allReplays);
+
+            AddJobs(new List<string>(), allReplaysList);
         }
     }
 }
