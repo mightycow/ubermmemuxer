@@ -866,7 +866,7 @@ namespace Uber.MmeMuxer
                 var depthFolder = Path.Combine(cutFolder, "depth");
                 if(Directory.Exists(depthFolder))
                 {
-                    AddImageSequence(colourFolder, "depth", ImageType.Depth, cutFolderName);
+                    AddImageSequence(depthFolder, "depth", ImageType.Depth, cutFolderName);
                 }
             }
 
