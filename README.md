@@ -61,6 +61,7 @@ Supported input formats
 All output files (marked as `$(final_name)` above) are named according to the `File Naming Rules` settings.
 
 Notes about the Reflex support in UMM:
+
 1. The Reflex replay folders that UMM accepts are the ones at the root of the Reflex "replays" folder `$(ReflexRoot)\base\replays`.
 2. The image sequences that Reflex outputs don't have leading zeroes in their names and MEncoder doesn't understand natural sort order for input. UMM will rename the files to add leading zeroes.
 3. Reflex doesn't have audio output support (yet). If that changes and you don't see a new version of UMM with Reflex audio support, feel free to let the author know.
