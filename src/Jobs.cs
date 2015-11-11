@@ -875,7 +875,24 @@ namespace Uber.MmeMuxer
 
         public override void SaveJobToBatchFile(StreamWriter file)
         {
-            // @TODO:
+            var i = 0;
+            foreach(var sequence in _imageSequences)
+            {
+                var config = UmmApp.Instance.GetConfig();
+
+                var args = new MEncoderArguments();
+                args.AviHasAudio = false;
+                args.ImageSequence = true;
+                args.InputAudioPath = null;
+                args.InputImagesPath = sequence.ImageSequencePath;
+                args.OutputFilePath = CreateOutputFilePath(sequence, config, i);
+                args.UseSeparateAudioFile = false;
+                args.Monochrome = sequence.Type == ImageType.Depth;
+
+                UmmApp.Instance.WriteTobatchFile(file, sequence.FolderPath, args);
+
+                ++i;
+            } 
         }
 
         public override bool ProcessJob()
