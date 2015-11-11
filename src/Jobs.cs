@@ -832,6 +832,7 @@ namespace Uber.MmeMuxer
             public string ImageSequencePath; // Input file name for MEncoder.
             public string FolderPath; // The folder path containing the images.
             public ImageType Type = ImageType.Colour;
+            public int FrameRate = 0;
         }
 
         private string _folderPath;
@@ -856,17 +857,19 @@ namespace Uber.MmeMuxer
             foreach(var cutFolder in cutFolders)
             {
                 var cutFolderName = Path.GetFileName(cutFolder);
+                var frameRateIndex = cutFolderName.IndexOf("framerate") + "framerate".Length;
+                var frameRate = int.Parse(cutFolderName.Substring(frameRateIndex));
 
                 var colourFolder = Path.Combine(cutFolder, "colour");
                 if(Directory.Exists(colourFolder))
                 {
-                    AddImageSequence(colourFolder, "colour", ImageType.Colour, cutFolderName);
+                    AddImageSequence(colourFolder, "colour", ImageType.Colour, cutFolderName, frameRate);
                 }
 
                 var depthFolder = Path.Combine(cutFolder, "depth");
                 if(Directory.Exists(depthFolder))
                 {
-                    AddImageSequence(depthFolder, "depth", ImageType.Depth, cutFolderName);
+                    AddImageSequence(depthFolder, "depth", ImageType.Depth, cutFolderName, frameRate);
                 }
             }
 
@@ -888,6 +891,8 @@ namespace Uber.MmeMuxer
                 args.OutputFilePath = CreateOutputFilePath(sequence, config, i);
                 args.UseSeparateAudioFile = false;
                 args.Monochrome = sequence.Type == ImageType.Depth;
+                args.InputFrameRate = sequence.FrameRate;
+                args.OutputFrameRate = sequence.FrameRate;
 
                 UmmApp.Instance.WriteTobatchFile(file, sequence.FolderPath, args);
 
@@ -921,6 +926,8 @@ namespace Uber.MmeMuxer
                 args.OutputFilePath = outputFilePath;
                 args.UseSeparateAudioFile = false;
                 args.Monochrome = sequence.Type == ImageType.Depth;
+                args.InputFrameRate = sequence.FrameRate;
+                args.OutputFrameRate = sequence.FrameRate;
 
                 var info = UmmApp.Instance.CreateMEncoderProcessStartInfo(sequence.FolderPath, args);
                 var process = Process.Start(info);
@@ -966,7 +973,7 @@ namespace Uber.MmeMuxer
             return outputFilePath;
         }
 
-        private void AddImageSequence(string folderPath, string name, ImageType imageType, string cutFolderName)
+        private void AddImageSequence(string folderPath, string name, ImageType imageType, string cutFolderName, int frameRate)
         {
             var imageFilePaths = Directory.GetFiles(folderPath, "*.tga", SearchOption.TopDirectoryOnly);
             if(imageFilePaths.Length == 0)
@@ -1024,6 +1031,7 @@ namespace Uber.MmeMuxer
             sequence.ImageSequencePath = name + "_*.tga";
             sequence.DemoCutFolderName = cutFolderName;
             sequence.FolderPath = folderPath;
+            sequence.FrameRate = frameRate;
             _imageSequences.Add(sequence);
 
             FrameCount += sequence.ImageFilePaths.Count;

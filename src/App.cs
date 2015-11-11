@@ -31,6 +31,8 @@ namespace Uber.MmeMuxer
         public string OutputFilePath;
         public bool CodecOverride = false;
         public VideoCodec Codec;
+        public int InputFrameRate = 0;  // 0 means no override value available.
+        public int OutputFrameRate = 0; // 0 means no override value available.
     }
 
     public class UmmConfig
@@ -57,6 +59,7 @@ namespace Uber.MmeMuxer
         public int FramesToSkip = 2;
         public bool FileNamingUseImageName = false;
         public bool FileOverwriteAllow = false;
+        public bool UseFolderLocalFrameRate = true;
     }
 
     public partial class UmmApp : AppBase<UmmConfig>
@@ -826,9 +829,24 @@ namespace Uber.MmeMuxer
                 codec = args.Codec;
             }
 
+            var inputFrameRate = Config.FrameRate;
+            var outputFrameRate = Config.OutputFrameRate;
+            if(Config.UseFolderLocalFrameRate)
+            {
+                if(args.InputFrameRate > 0)
+                {
+                    inputFrameRate = args.InputFrameRate;
+                }
+
+                if(args.OutputFrameRate > 0)
+                {
+                    outputFrameRate = args.OutputFrameRate;
+                }
+            }
+
             if(args.ImageSequence && args.InputImagesPath == null)
             {
-                LogWarning("CreateMEncoderArguments: ");
+                LogWarning("CreateMEncoderArguments: args.ImageSequence && args.InputImagesPath == null");
                 LogWarning("Told to use an image sequence but none was specified. The format is like this: *.tga");
             }
             if(args.InputVideoPaths.Count > 1 && args.UseSeparateAudioFile)
@@ -849,12 +867,12 @@ namespace Uber.MmeMuxer
                 arguments.Append(args.InputImagesPath);
 
                 arguments.Append(" -mf fps=");
-                arguments.Append(Config.FrameRate);
+                arguments.Append(inputFrameRate);
             }
             else
             {
                 arguments.Append(" -fps ");
-                arguments.Append(Config.FrameRate);
+                arguments.Append(inputFrameRate);
 
                 foreach(var inputVideoPath in args.InputVideoPaths)
                 {
@@ -866,7 +884,7 @@ namespace Uber.MmeMuxer
 
             if(Config.FramesToSkip > 0)
             {
-                var startTimeSeconds = (double)Config.FramesToSkip * (1.0 / (double)Config.OutputFrameRate);
+                var startTimeSeconds = (double)Config.FramesToSkip * (1.0 / (double)outputFrameRate);
                 arguments.Append(" -ss ");
                 arguments.Append(startTimeSeconds);
             }
@@ -929,10 +947,10 @@ namespace Uber.MmeMuxer
                     break;
             }
 
-            if(args.ImageSequence && Config.OutputFrameRate != Config.FrameRate)
+            if(args.ImageSequence && outputFrameRate != inputFrameRate)
             {
                 arguments.Append(" -ofps ");
-                arguments.Append(Config.OutputFrameRate);
+                arguments.Append(outputFrameRate);
             }
 
             arguments.Append(" -of avi -o \"");
