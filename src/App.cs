@@ -673,6 +673,10 @@ namespace Uber.MmeMuxer
             {
                 EntryPoint.RaiseException(exception);
             }
+            finally
+            {
+                Gui_OnJobEnd();
+            }
         }
 
         private void JobsThreadImpl(object arg)
@@ -731,8 +735,6 @@ namespace Uber.MmeMuxer
                 _currentJobProgress = 0.0;
                 SetProgressThreadSafe(progress);
             }
-
-            Gui_OnJobEnd();
         }
 
         public void LogInfo(string message, params object[] args)
@@ -1041,6 +1043,7 @@ namespace Uber.MmeMuxer
         {
             DisableUiNonThreadSafe();
             ShowProgressNonThreadSafe();
+            ThreadedJobTitleTimer.Restart();
         }
 
         // Called from the job thread.
@@ -1048,6 +1051,8 @@ namespace Uber.MmeMuxer
         {
             HideProgressThreadSafe();
             EnableUiThreadSafe();
+            VoidDelegate titleResetter = delegate { MainWindow.Title = "UMM"; };
+            MainWindow.Dispatcher.Invoke(titleResetter);
         }
     }
 }
