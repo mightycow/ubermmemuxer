@@ -47,6 +47,7 @@ namespace Uber
         private double _currentJobFrameRate = -1.0;
         protected double _currentJobProgress = 0.0;
         private double _currentBatchProgress = 0.0;
+        protected readonly Stopwatch ThreadedJobTitleTimer = new Stopwatch();
         private bool _firstBatchProgressRead = false;
 
         public AppBase(string[] cmdLineArgs)
@@ -208,7 +209,16 @@ namespace Uber
         protected void SetProgressThreadSafe(double value)
         {
             _currentBatchProgress = value;
-            VoidDelegate valueSetter = delegate { ProgressBar.Value = value; ProgressBar.InvalidateVisual(); };
+            VoidDelegate valueSetter = delegate 
+            { 
+                ProgressBar.Value = value; 
+                ProgressBar.InvalidateVisual();
+                if(ThreadedJobTitleTimer.ElapsedMilliseconds >= 200)
+                {
+                    MainWindow.Title = value.ToString("F1") + "% - UMM";
+                    ThreadedJobTitleTimer.Restart();
+                }
+            };
             ProgressBar.Dispatcher.Invoke(valueSetter);
         }
 

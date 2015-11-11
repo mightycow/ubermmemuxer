@@ -1,3 +1,9 @@
+0.2.0 (12.11.2015)
+ADD: Support for Reflex image sequences
+ADD: Title bar job progress to keep track of progress even when minimized
+ADD: The "Use capture folder FPS" option so that you can either use per-folder framerates or the ones in the UMM config
+ADD: Reflex buttons for opening the "replays" folder in the file explorer and adding all replays to the jobs list
+
 0.1.2a (09.04.2015)
 FIX: When using the image sequence's name, the output name would be incorrectly stripped off all digits
 ADD: An option to rename files to avoid overwrites

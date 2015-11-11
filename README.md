@@ -1,6 +1,6 @@
 # [UMM](https://github.com/mightycow/ubermmemuxer) - Uber MME Muxer
 
-UMM is used to simplify the batch processing of video and image sequences that are output by [**Q3MME**](http://q3mme.proboards.com/) (**Quake 3 Movie-Maker Edition**).  
+UMM is used to simplify the batch processing of video and image sequences that are output by [**Q3MME**](http://q3mme.proboards.com/) (**Quake 3 Movie-Maker Edition**) and [**Reflex**](http://reflexfps.net/).  
 It allows you to mux all of the output into .avi files with audio (when available).
 
 Official UMM binaries
@@ -36,8 +36,8 @@ Typical UMM usage scenario
 
 The typical day-to-day usage scenario for UMM, assuming it's been set up properly:
 
-1. Render some demos with **q3mme**.
-2. Drag'n'drop the content of **q3mme**'s `capture` folder into UMM.
+1. Render some demos with **q3mme** or **Reflex**.
+2. Drag'n'drop the content of **q3mme**'s `capture` folder or **Reflex**' `replays` folder into UMM.
 3. Click `Go!`.
 4. If necessary, move and/or rename some of the output .avi files to their final location.
 5. You can now import the video files into your preferred video editing tool and work on that cool movie of yours.
@@ -52,9 +52,19 @@ Supported input formats
 | **3)**  Folder with image file(s) + optional .wav | $(final_name).avi         | Parent | Custom | Color      | If available
 | **3) a)** if matches (*.depth.*.$(ext))           | $(final_name).depth.avi   | Parent | Custom | Monochrome | No
 | **3) b)** if matches (*.stencil.*.$(ext))         | $(final_name).stencil.avi | Parent | Custom | Monochrome | No
-1. COP: Custom Output Folder --- see `Output all files to this foler` under `General Settings`
+| **4)**  Reflex replay folder                      |                                    |        |        |            |
+| **4) a)** colour output                           | $(demo_name)_time($time)_color.avi | Parent | Custom | Color      | No<sup>[2]</sup>
+| **4) b)** depth output                            | $(demo_name)_time($time)_depth.avi | Parent | Custom | Monochrome | No<sup>[2]</sup>
+1. COP: Custom Output Folder &mdash; see `Output all files to this foler` under `General Settings`
+2. As of now (November 12 2015), Reflex doesn't output audio files yet
 
 All output files (marked as `$(final_name)` above) are named according to the `File Naming Rules` settings.
+
+Notes about the Reflex support in UMM:
+
+1. The Reflex replay folders that UMM accepts are the ones at the root of the Reflex "replays" folder `$(ReflexRoot)\base\replays`.
+2. The image sequences that Reflex outputs don't have leading zeroes in their names and MEncoder doesn't understand natural sort order for input. UMM will rename the files to add leading zeroes.
+3. Reflex doesn't have audio output support (yet). If that changes and you don't see a new version of UMM with Reflex audio support, feel free to let the author know.
 
 Settings
 --------
@@ -69,8 +79,8 @@ Settings
 ### Monochrome Video CODEC
 * The same explanations as for the `Video CODEC` settings above apply, except...
 * Those settings are only used for depth/stencil image sequences.
-* Depth sequences are those including the string ".depth." in the image file names.
-* Stencil sequences are those including the string ".stencil." in the image file names.
+* Q3MME: Depth sequences are those including the string ".depth." in the image file names.
+* Q3MME: Stencil sequences are those including the string ".stencil." in the image file names.
 
 ### Input and output FPS
 If *In* is the `Input Frame Rate` and *Out* the `Output Frame Rate`, we have the following 3 possible scenarios:

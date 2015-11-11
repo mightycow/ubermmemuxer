@@ -207,6 +207,7 @@ namespace Uber.MmeMuxer
         private TextBox _framesToSkipEditBox;
         private CheckBox _displayMEncoderStdErrCheckBox;
         private CheckBox _outputAllFilesToSameFolderCheckBox;
+        private CheckBox _useFolderFrameRateCheckBox;
         private TextBox _outputFolderTextBox;
 
         // File naming.
@@ -368,6 +369,13 @@ namespace Uber.MmeMuxer
             outputAllFilesToSameFolderCheckBox.Checked += (obj, args) => OnOutputAllFilesToSameFolderChecked();
             outputAllFilesToSameFolderCheckBox.Unchecked += (obj, args) => OnOutputAllFilesToSameFolderChecked();
 
+            var useFolderFrameRateCheckBox = new CheckBox();
+            _useFolderFrameRateCheckBox = useFolderFrameRateCheckBox;
+            useFolderFrameRateCheckBox.HorizontalAlignment = HorizontalAlignment.Left;
+            useFolderFrameRateCheckBox.VerticalAlignment = VerticalAlignment.Center;
+            useFolderFrameRateCheckBox.Margin = new Thickness(7, 5, 5, 5);
+            useFolderFrameRateCheckBox.Content = "  Use capture folder FPS? (only for Reflex atm)";
+
             var outputFolderTextBox = new TextBox();
             _outputFolderTextBox = outputFolderTextBox;
             outputFolderTextBox.HorizontalAlignment = HorizontalAlignment.Left;
@@ -414,6 +422,7 @@ namespace Uber.MmeMuxer
             generalStackPanel.Children.Add(frameRatePanel);
             generalStackPanel.Children.Add(displayMEncoderStdErrCheckBox);
             generalStackPanel.Children.Add(outputAllFilesToSameFolderCheckBox);
+            generalStackPanel.Children.Add(useFolderFrameRateCheckBox);
             generalStackPanel.Children.Add(outputFolderStackPanel);
 
             var generalGroupBox = new GroupBox();
@@ -672,6 +681,7 @@ namespace Uber.MmeMuxer
             Config.OutputAllFilesToSameFolder = _outputAllFilesToSameFolderCheckBox.IsChecked ?? false;
             Config.OutputFolderPath = _outputFolderTextBox.Text;
             Config.FileOverwriteAllow = _fileOverwriteAllowRadioButton.IsChecked ?? false;
+            Config.UseFolderLocalFrameRate = _useFolderFrameRateCheckBox.IsChecked ?? false;
         }
 
         private void LoadGeneralSettings()
@@ -684,6 +694,7 @@ namespace Uber.MmeMuxer
             _outputAllFilesToSameFolderCheckBox.IsChecked = Config.OutputAllFilesToSameFolder;
             _outputFolderTextBox.Text = Config.OutputFolderPath;
             _fileOverwriteAllowRadioButton.IsChecked = Config.FileOverwriteAllow;
+            _useFolderFrameRateCheckBox.IsChecked = Config.UseFolderLocalFrameRate;
             OnOutputAllFilesToSameFolderChecked();
         }
 

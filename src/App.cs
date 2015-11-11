@@ -16,7 +16,7 @@ namespace Uber.MmeMuxer
 {
     public static class UmmVersion
     {
-        public static readonly string String = "0.1.2a";
+        public static readonly string String = "0.2.0";
     }
 
     public class MEncoderArguments
@@ -31,6 +31,8 @@ namespace Uber.MmeMuxer
         public string OutputFilePath;
         public bool CodecOverride = false;
         public VideoCodec Codec;
+        public int InputFrameRate = 0;  // 0 means no override value available.
+        public int OutputFrameRate = 0; // 0 means no override value available.
     }
 
     public class UmmConfig
@@ -57,6 +59,7 @@ namespace Uber.MmeMuxer
         public int FramesToSkip = 2;
         public bool FileNamingUseImageName = false;
         public bool FileOverwriteAllow = false;
+        public bool UseFolderLocalFrameRate = true;
     }
 
     public partial class UmmApp : AppBase<UmmConfig>
@@ -103,8 +106,6 @@ namespace Uber.MmeMuxer
         private List<EncodeJob> _jobs = new List<EncodeJob>();
 
         private readonly List<string> _outputFilePaths = new List<string>();
-
-        private static RoutedCommand _deleteFolderCommand = new RoutedCommand();
 
         private enum VideoStreamType
         {
@@ -267,7 +268,6 @@ namespace Uber.MmeMuxer
             jobsListView.Drop += OnMuxFolderListBoxDragDrop;
             jobsListView.Initialized += (obj, arg) => { _jobsListViewBackground = _jobsListView.Background; };
             jobsListView.Foreground = new SolidColorBrush(Colors.Black);
-            InitFolderListDeleteCommand();
 
             var jobsListGroupBox = new GroupBox();
             jobsListGroupBox.Header = "Jobs List";
@@ -355,28 +355,6 @@ namespace Uber.MmeMuxer
             }
 
             AddJobs(droppedFilePaths, droppedFolderPaths);
-        }
-
-        private void OnOpenMuxFolder()
-        {
-
-        }
-
-        private void OnRemoveFolderClicked()
-        {
-
-        }
-        
-        private void InitFolderListDeleteCommand()
-        {
-            var inputGesture = new KeyGesture(Key.Delete, ModifierKeys.None);
-            var inputBinding = new KeyBinding(_deleteFolderCommand, inputGesture);
-            var commandBinding = new CommandBinding();
-            commandBinding.Command = _deleteFolderCommand;
-            commandBinding.Executed += (obj, args) => OnRemoveFolderClicked();
-            commandBinding.CanExecute += (obj, args) => { args.CanExecute = true; };
-            _jobsListView.InputBindings.Add(inputBinding);
-            _jobsListView.CommandBindings.Add(commandBinding);
         }
 
         private void OnMuxFolderListBoxDragEnter(object sender, DragEventArgs e)
@@ -486,78 +464,131 @@ namespace Uber.MmeMuxer
 
         private void AddJobsImpl(List<string> filePaths, List<string> folderPaths)
         {
-            // Single video files.
             foreach(var filePath in filePaths)
             {
-                var job = AviSequenceEncodeJob.FromFile(filePath);
-                job.Analyze();
-                if(!job.IsValid)
+                if(TryAddVideoSequenceFileJob(filePath))
                 {
-                    LogWarning("Invalid file: " + filePath);
                     continue;
                 }
-                _jobs.Add(job);
 
-                var fileName = Path.GetFileName(filePath);
-                var info = new JobDisplayInfo();
-                info.Job = job;
-                info.Name = fileName;
-                info.VideoCount = 1;
-                info.FrameCount = job.FrameCount;
-                info.HasAudio = job.HasAudio;
-
-                VoidDelegate itemAdder = delegate { _jobsListView.Items.Add(info); };
-                _jobsListView.Dispatcher.Invoke(itemAdder);
+                LogWarning("Invalid file: " + filePath);
             }
 
-            // Image sequence(s) folders.
-            var rejectedFolderPaths = new List<string>();
             foreach(var folderPath in folderPaths)
             {
-                var job = new ImageSequenceEncodeJob(folderPath);
-                job.AnalyzeFolder();
-                if(!job.IsValid)
+                if(TryAddReflexFolderJob(folderPath))
                 {
-                    rejectedFolderPaths.Add(folderPath);
                     continue;
                 }
-                _jobs.Add(job);
 
-                var folderName = Path.GetFileName(folderPath);
-                var info = new JobDisplayInfo();
-                info.Job = job;
-                info.Name = folderName;
-                info.VideoCount = job.SequenceCount;
-                info.FrameCount = job.FrameCount;
-                info.HasAudio = job.HasAudio;
+                if(TryAddImageSequenceFolderJob(folderPath))
+                {
+                    continue;
+                }
 
-                VoidDelegate itemAdder = delegate { _jobsListView.Items.Add(info); };
-                _jobsListView.Dispatcher.Invoke(itemAdder);
+                if(TryAddVideoSequenceFolderJob(folderPath))
+                {
+                    continue;
+                }
+
+                LogWarning("Invalid folder: " + folderPath);
             }
+        }
 
-            // Video sequence folders.
-            foreach(var folderPath in rejectedFolderPaths)
+        private bool TryAddVideoSequenceFileJob(string filePath)
+        {
+            var job = AviSequenceEncodeJob.FromFile(filePath);
+            job.Analyze();
+            if(!job.IsValid)
             {
-                var job = AviSequenceEncodeJob.FromFolder(folderPath);
-                job.Analyze();
-                if(!job.IsValid)
-                {
-                    LogWarning("Invalid folder: " + folderPath);
-                    continue;
-                }
-                _jobs.Add(job);
-
-                var folderName = Path.GetFileName(folderPath);
-                var info = new JobDisplayInfo();
-                info.Job = job;
-                info.Name = folderName;
-                info.VideoCount = 1;
-                info.FrameCount = job.FrameCount;
-                info.HasAudio = job.HasAudio;
-
-                VoidDelegate itemAdder = delegate { _jobsListView.Items.Add(info); };
-                _jobsListView.Dispatcher.Invoke(itemAdder);
+                return false;
             }
+            _jobs.Add(job);
+
+            var fileName = Path.GetFileName(filePath);
+            var info = new JobDisplayInfo();
+            info.Job = job;
+            info.Name = fileName;
+            info.VideoCount = 1;
+            info.FrameCount = job.FrameCount;
+            info.HasAudio = job.HasAudio;
+
+            VoidDelegate itemAdder = delegate { _jobsListView.Items.Add(info); };
+            _jobsListView.Dispatcher.Invoke(itemAdder);
+
+            return true;
+        }
+
+        private bool TryAddImageSequenceFolderJob(string folderPath)
+        {
+            var job = new ImageSequenceEncodeJob(folderPath);
+            job.AnalyzeFolder();
+            if(!job.IsValid)
+            {
+                return false;
+            }
+            _jobs.Add(job);
+
+            var folderName = Path.GetFileName(folderPath);
+            var info = new JobDisplayInfo();
+            info.Job = job;
+            info.Name = folderName;
+            info.VideoCount = job.SequenceCount;
+            info.FrameCount = job.FrameCount;
+            info.HasAudio = job.HasAudio;
+
+            VoidDelegate itemAdder = delegate { _jobsListView.Items.Add(info); };
+            _jobsListView.Dispatcher.Invoke(itemAdder);
+
+            return true;
+        }
+
+        private bool TryAddVideoSequenceFolderJob(string folderPath)
+        {
+            var job = AviSequenceEncodeJob.FromFolder(folderPath);
+            job.Analyze();
+            if(!job.IsValid)
+            {
+                return false;
+            }
+            _jobs.Add(job);
+
+            var folderName = Path.GetFileName(folderPath);
+            var info = new JobDisplayInfo();
+            info.Job = job;
+            info.Name = folderName;
+            info.VideoCount = 1;
+            info.FrameCount = job.FrameCount;
+            info.HasAudio = job.HasAudio;
+
+            VoidDelegate itemAdder = delegate { _jobsListView.Items.Add(info); };
+            _jobsListView.Dispatcher.Invoke(itemAdder);
+
+            return true;
+        }
+
+        private bool TryAddReflexFolderJob(string folderPath)
+        {
+            var job = new ReflexEncodeJob(folderPath);
+            job.Analyze();
+            if(!job.IsValid)
+            {
+                return false;
+            }
+            _jobs.Add(job);
+
+            var folderName = Path.GetFileName(folderPath);
+            var info = new JobDisplayInfo();
+            info.Job = job;
+            info.Name = folderName;
+            info.VideoCount = job.SequenceCount;
+            info.FrameCount = job.FrameCount;
+            info.HasAudio = job.HasAudio;
+
+            VoidDelegate itemAdder = delegate { _jobsListView.Items.Add(info); };
+            _jobsListView.Dispatcher.Invoke(itemAdder);
+
+            return true;
         }
 
         private class JobsProcessThreadData
@@ -645,6 +676,10 @@ namespace Uber.MmeMuxer
             {
                 EntryPoint.RaiseException(exception);
             }
+            finally
+            {
+                Gui_OnJobEnd();
+            }
         }
 
         private void JobsThreadImpl(object arg)
@@ -703,8 +738,6 @@ namespace Uber.MmeMuxer
                 _currentJobProgress = 0.0;
                 SetProgressThreadSafe(progress);
             }
-
-            Gui_OnJobEnd();
         }
 
         public void LogInfo(string message, params object[] args)
@@ -796,9 +829,24 @@ namespace Uber.MmeMuxer
                 codec = args.Codec;
             }
 
+            var inputFrameRate = Config.FrameRate;
+            var outputFrameRate = Config.OutputFrameRate;
+            if(Config.UseFolderLocalFrameRate)
+            {
+                if(args.InputFrameRate > 0)
+                {
+                    inputFrameRate = args.InputFrameRate;
+                }
+
+                if(args.OutputFrameRate > 0)
+                {
+                    outputFrameRate = args.OutputFrameRate;
+                }
+            }
+
             if(args.ImageSequence && args.InputImagesPath == null)
             {
-                LogWarning("CreateMEncoderArguments: ");
+                LogWarning("CreateMEncoderArguments: args.ImageSequence && args.InputImagesPath == null");
                 LogWarning("Told to use an image sequence but none was specified. The format is like this: *.tga");
             }
             if(args.InputVideoPaths.Count > 1 && args.UseSeparateAudioFile)
@@ -819,12 +867,12 @@ namespace Uber.MmeMuxer
                 arguments.Append(args.InputImagesPath);
 
                 arguments.Append(" -mf fps=");
-                arguments.Append(Config.FrameRate);
+                arguments.Append(inputFrameRate);
             }
             else
             {
                 arguments.Append(" -fps ");
-                arguments.Append(Config.FrameRate);
+                arguments.Append(inputFrameRate);
 
                 foreach(var inputVideoPath in args.InputVideoPaths)
                 {
@@ -836,7 +884,7 @@ namespace Uber.MmeMuxer
 
             if(Config.FramesToSkip > 0)
             {
-                var startTimeSeconds = (double)Config.FramesToSkip * (1.0 / (double)Config.OutputFrameRate);
+                var startTimeSeconds = (double)Config.FramesToSkip * (1.0 / (double)outputFrameRate);
                 arguments.Append(" -ss ");
                 arguments.Append(startTimeSeconds);
             }
@@ -899,10 +947,10 @@ namespace Uber.MmeMuxer
                     break;
             }
 
-            if(args.ImageSequence && Config.OutputFrameRate != Config.FrameRate)
+            if(args.ImageSequence && outputFrameRate != inputFrameRate)
             {
                 arguments.Append(" -ofps ");
-                arguments.Append(Config.OutputFrameRate);
+                arguments.Append(outputFrameRate);
             }
 
             arguments.Append(" -of avi -o \"");
@@ -1013,6 +1061,7 @@ namespace Uber.MmeMuxer
         {
             DisableUiNonThreadSafe();
             ShowProgressNonThreadSafe();
+            ThreadedJobTitleTimer.Restart();
         }
 
         // Called from the job thread.
@@ -1020,6 +1069,8 @@ namespace Uber.MmeMuxer
         {
             HideProgressThreadSafe();
             EnableUiThreadSafe();
+            VoidDelegate titleResetter = delegate { MainWindow.Title = "UMM"; };
+            MainWindow.Dispatcher.Invoke(titleResetter);
         }
     }
 }
