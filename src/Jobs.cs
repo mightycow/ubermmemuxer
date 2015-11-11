@@ -993,9 +993,10 @@ namespace Uber.MmeMuxer
                     continue;
                 }
 
-                var number = int.Parse(match.Groups[1].Value);
+                var numberString = match.Groups[1].Value;
+                var number = int.Parse(numberString);
                 highestNumber = Math.Max(highestNumber, number);
-                imageList.Add(new FileNameSortInfo(imageFilePath, number));
+                imageList.Add(new FileNameSortInfo(imageFilePath, number, numberString.Length));
             }
             if(imageList.Count == 0)
             {
@@ -1009,12 +1010,12 @@ namespace Uber.MmeMuxer
             var digitCount = GetDigitCount(highestNumber);
             foreach(var image in imageList)
             {
-                var imageDigitCount = GetDigitCount(image.Number);
-                if(imageDigitCount == digitCount)
+                if(image.NumberLength == digitCount)
                 {
-                    break;
+                    continue;
                 }
 
+                var imageDigitCount = GetDigitCount(image.Number);
                 var leadingZeroes = new string('0', digitCount - imageDigitCount);
                 var newFileName = name + "_" + leadingZeroes + image.Number.ToString() + ".tga";
                 var newFilePath = Path.Combine(folderPath, newFileName);
@@ -1051,14 +1052,16 @@ namespace Uber.MmeMuxer
 
         private class FileNameSortInfo
         {
-            public FileNameSortInfo(string filePath, int number)
+            public FileNameSortInfo(string filePath, int number, int numberLength)
             {
                 FilePath = filePath;
                 Number = number;
+                NumberLength = numberLength;
             }
 
             public string FilePath;
             public int Number;
+            public int NumberLength;
         }
     }
 }
