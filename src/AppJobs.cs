@@ -252,8 +252,9 @@ namespace Uber.MmeMuxer
                 var replaysPath = Reflex.GetReflexReplaysFolder();
                 Process.Start(replaysPath);
             }
-            catch(Exception)
+            catch(Exception exception)
             {
+                UmmApp.Instance.LogError("Caught an exception while getting/opening the Reflex replays folder: " + exception.Message);
             }
         }
 
@@ -264,8 +265,9 @@ namespace Uber.MmeMuxer
             {
                 replaysPath = Reflex.GetReflexReplaysFolder();
             }
-            catch(Exception)
+            catch(Exception exception)
             {
+                UmmApp.Instance.LogError("Caught an exception while getting the Reflex replays folder: " + exception.Message);
                 return;
             }
 
