@@ -182,7 +182,13 @@ namespace Uber.MmeMuxer
                 return null;
             }
 
-            return Path.Combine(reflexRoot, @"base\replays");
+            var replaysPath = Path.Combine(reflexRoot, @"base\replays");
+            if(!Directory.Exists(replaysPath))
+            {
+                return null;
+            }
+
+            return replaysPath;
         }
 
         private static string GetSteamBasePath()
