@@ -461,78 +461,131 @@ namespace Uber.MmeMuxer
 
         private void AddJobsImpl(List<string> filePaths, List<string> folderPaths)
         {
-            // Single video files.
             foreach(var filePath in filePaths)
             {
-                var job = AviSequenceEncodeJob.FromFile(filePath);
-                job.Analyze();
-                if(!job.IsValid)
+                if(TryAddVideoSequenceFileJob(filePath))
                 {
-                    LogWarning("Invalid file: " + filePath);
                     continue;
                 }
-                _jobs.Add(job);
 
-                var fileName = Path.GetFileName(filePath);
-                var info = new JobDisplayInfo();
-                info.Job = job;
-                info.Name = fileName;
-                info.VideoCount = 1;
-                info.FrameCount = job.FrameCount;
-                info.HasAudio = job.HasAudio;
-
-                VoidDelegate itemAdder = delegate { _jobsListView.Items.Add(info); };
-                _jobsListView.Dispatcher.Invoke(itemAdder);
+                LogWarning("Invalid file: " + filePath);
             }
 
-            // Image sequence(s) folders.
-            var rejectedFolderPaths = new List<string>();
             foreach(var folderPath in folderPaths)
             {
-                var job = new ImageSequenceEncodeJob(folderPath);
-                job.AnalyzeFolder();
-                if(!job.IsValid)
+                if(TryAddReflexFolderJob(folderPath))
                 {
-                    rejectedFolderPaths.Add(folderPath);
                     continue;
                 }
-                _jobs.Add(job);
 
-                var folderName = Path.GetFileName(folderPath);
-                var info = new JobDisplayInfo();
-                info.Job = job;
-                info.Name = folderName;
-                info.VideoCount = job.SequenceCount;
-                info.FrameCount = job.FrameCount;
-                info.HasAudio = job.HasAudio;
+                if(TryAddImageSequenceFolderJob(folderPath))
+                {
+                    continue;
+                }
 
-                VoidDelegate itemAdder = delegate { _jobsListView.Items.Add(info); };
-                _jobsListView.Dispatcher.Invoke(itemAdder);
+                if(TryAddVideoSequenceFolderJob(folderPath))
+                {
+                    continue;
+                }
+
+                LogWarning("Invalid folder: " + folderPath);
             }
+        }
 
-            // Video sequence folders.
-            foreach(var folderPath in rejectedFolderPaths)
+        private bool TryAddVideoSequenceFileJob(string filePath)
+        {
+            var job = AviSequenceEncodeJob.FromFile(filePath);
+            job.Analyze();
+            if(!job.IsValid)
             {
-                var job = AviSequenceEncodeJob.FromFolder(folderPath);
-                job.Analyze();
-                if(!job.IsValid)
-                {
-                    LogWarning("Invalid folder: " + folderPath);
-                    continue;
-                }
-                _jobs.Add(job);
-
-                var folderName = Path.GetFileName(folderPath);
-                var info = new JobDisplayInfo();
-                info.Job = job;
-                info.Name = folderName;
-                info.VideoCount = 1;
-                info.FrameCount = job.FrameCount;
-                info.HasAudio = job.HasAudio;
-
-                VoidDelegate itemAdder = delegate { _jobsListView.Items.Add(info); };
-                _jobsListView.Dispatcher.Invoke(itemAdder);
+                return false;
             }
+            _jobs.Add(job);
+
+            var fileName = Path.GetFileName(filePath);
+            var info = new JobDisplayInfo();
+            info.Job = job;
+            info.Name = fileName;
+            info.VideoCount = 1;
+            info.FrameCount = job.FrameCount;
+            info.HasAudio = job.HasAudio;
+
+            VoidDelegate itemAdder = delegate { _jobsListView.Items.Add(info); };
+            _jobsListView.Dispatcher.Invoke(itemAdder);
+
+            return true;
+        }
+
+        private bool TryAddImageSequenceFolderJob(string folderPath)
+        {
+            var job = new ImageSequenceEncodeJob(folderPath);
+            job.AnalyzeFolder();
+            if(!job.IsValid)
+            {
+                return false;
+            }
+            _jobs.Add(job);
+
+            var folderName = Path.GetFileName(folderPath);
+            var info = new JobDisplayInfo();
+            info.Job = job;
+            info.Name = folderName;
+            info.VideoCount = job.SequenceCount;
+            info.FrameCount = job.FrameCount;
+            info.HasAudio = job.HasAudio;
+
+            VoidDelegate itemAdder = delegate { _jobsListView.Items.Add(info); };
+            _jobsListView.Dispatcher.Invoke(itemAdder);
+
+            return true;
+        }
+
+        private bool TryAddVideoSequenceFolderJob(string folderPath)
+        {
+            var job = AviSequenceEncodeJob.FromFolder(folderPath);
+            job.Analyze();
+            if(!job.IsValid)
+            {
+                return false;
+            }
+            _jobs.Add(job);
+
+            var folderName = Path.GetFileName(folderPath);
+            var info = new JobDisplayInfo();
+            info.Job = job;
+            info.Name = folderName;
+            info.VideoCount = 1;
+            info.FrameCount = job.FrameCount;
+            info.HasAudio = job.HasAudio;
+
+            VoidDelegate itemAdder = delegate { _jobsListView.Items.Add(info); };
+            _jobsListView.Dispatcher.Invoke(itemAdder);
+
+            return true;
+        }
+
+        private bool TryAddReflexFolderJob(string folderPath)
+        {
+            var job = new ReflexEncodeJob(folderPath);
+            job.Analyze();
+            if(!job.IsValid)
+            {
+                return false;
+            }
+            _jobs.Add(job);
+
+            var folderName = Path.GetFileName(folderPath);
+            var info = new JobDisplayInfo();
+            info.Job = job;
+            info.Name = folderName;
+            info.VideoCount = 1;
+            info.FrameCount = job.FrameCount;
+            info.HasAudio = job.HasAudio;
+
+            VoidDelegate itemAdder = delegate { _jobsListView.Items.Add(info); };
+            _jobsListView.Dispatcher.Invoke(itemAdder);
+
+            return true;
         }
 
         private class JobsProcessThreadData

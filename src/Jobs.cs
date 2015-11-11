@@ -816,4 +816,224 @@ namespace Uber.MmeMuxer
             return sequences;
         }
     }
+
+    public class ReflexEncodeJob : EncodeJob
+    {
+        private enum ImageType
+        {
+            Colour,
+            Depth
+        }
+
+        private class ImageSequence
+        {
+            public readonly List<string> ImageFilePaths = new List<string>();
+            public string DemoCutFolderName;
+            public string ImageSequencePath; // Input file name for MEncoder.
+            public string FolderPath; // The folder path containing the images.
+            public ImageType Type = ImageType.Colour;
+        }
+
+        private string _folderPath;
+        private readonly List<ImageSequence> _imageSequences = new List<ImageSequence>();
+
+        public int SequenceCount
+        {
+            get { return _imageSequences.Count; }
+        }
+
+        public ReflexEncodeJob(string folderPath)
+        {
+            _folderPath = folderPath;
+            IsValid = false;
+            HasAudio = false;
+            FrameCount = 0;
+        }
+
+        public void Analyze()
+        {
+            var cutFolders = Directory.GetDirectories(_folderPath, "time*_framerate*", SearchOption.TopDirectoryOnly);
+            foreach(var cutFolder in cutFolders)
+            {
+                var cutFolderName = Path.GetFileName(cutFolder);
+
+                var colourFolder = Path.Combine(cutFolder, "colour");
+                if(Directory.Exists(colourFolder))
+                {
+                    AddImageSequence(colourFolder, "colour", ImageType.Colour, cutFolderName);
+                }
+
+                var depthFolder = Path.Combine(cutFolder, "depth");
+                if(Directory.Exists(depthFolder))
+                {
+                    AddImageSequence(colourFolder, "depth", ImageType.Depth, cutFolderName);
+                }
+            }
+
+            IsValid = FrameCount > 0;
+        }
+
+        public override void SaveJobToBatchFile(StreamWriter file)
+        {
+            // @TODO:
+        }
+
+        public override bool ProcessJob()
+        {
+            TotalWorkLoad = 0;
+            ProcessedWorkLoad = 0;
+            foreach(var sequence in _imageSequences)
+            {
+                TotalWorkLoad += sequence.ImageFilePaths.Count;
+            }
+
+            var i = 0;
+            foreach(var sequence in _imageSequences)
+            {
+                CurrentSubJobWorkLoad = sequence.ImageFilePaths.Count;
+
+                InitializeMEncoderErrorOutput();
+
+                var config = UmmApp.Instance.GetConfig();
+                var outputFilePath = CreateOutputFilePath(sequence, config, i);
+                var args = new MEncoderArguments();
+                args.AviHasAudio = false;
+                args.ImageSequence = true;
+                args.InputAudioPath = null;
+                args.InputImagesPath = sequence.ImageSequencePath;
+                args.OutputFilePath = outputFilePath;
+                args.UseSeparateAudioFile = false;
+                args.Monochrome = sequence.Type == ImageType.Depth;
+
+                var info = UmmApp.Instance.CreateMEncoderProcessStartInfo(sequence.FolderPath, args);
+                var process = Process.Start(info);
+                if(process == null)
+                {
+                    return false;
+                }
+
+                ReadProcessOutputUntilDone(process);
+
+                // Update progress.
+                ProcessedWorkLoad += CurrentSubJobWorkLoad;
+
+                // Display error output, if any.
+                DisplayMEncoderErrorOutput();
+
+                ++i;
+            }
+
+            return true;
+        }
+
+        private string CreateOutputFileName(ImageSequence sequence, int sequenceIndex)
+        {
+            var demoName = Path.GetFileName(_folderPath);
+            var cutName = "timeunknown";
+            var type = sequence.Type == ImageType.Colour ? "colour" : "depth";
+            var underscoreIdx = sequence.DemoCutFolderName.IndexOf('_');
+            if(underscoreIdx >= 0 && underscoreIdx < sequence.DemoCutFolderName.Length - 1)
+            {
+                cutName = sequence.DemoCutFolderName.Substring(0, underscoreIdx);
+            }
+
+            return demoName + "_" + cutName + "_" + type + ".avi";
+        }
+
+        private string CreateOutputFilePath(ImageSequence sequence, UmmConfig config, int sequenceIndex)
+        {
+            var outputFileName = UmmApp.Instance.CreateOutputFileName(CreateOutputFileName(sequence, sequenceIndex));
+            var outputFilePath = Path.Combine(config.OutputAllFilesToSameFolder ? config.OutputFolderPath : Path.GetDirectoryName(_folderPath), outputFileName);
+            outputFilePath = UmmApp.Instance.ValidateAndFixOutputFilePath(outputFilePath);
+
+            return outputFilePath;
+        }
+
+        private void AddImageSequence(string folderPath, string name, ImageType imageType, string cutFolderName)
+        {
+            var imageFilePaths = Directory.GetFiles(folderPath, "*.tga", SearchOption.TopDirectoryOnly);
+            if(imageFilePaths.Length == 0)
+            {
+                return;
+            }
+
+            var fileNameRegEx = new Regex(name + "_" + @"(\d+)", RegexOptions.Compiled);
+            var imageList = new List<FileNameSortInfo>();
+            var highestNumber = 0;
+            foreach(var imageFilePath in imageFilePaths)
+            {
+                var fileName = Path.GetFileName(imageFilePath);
+                var match = fileNameRegEx.Match(fileName);
+                if(!match.Success)
+                {
+                    continue;
+                }
+
+                var number = int.Parse(match.Groups[1].Value);
+                highestNumber = Math.Max(highestNumber, number);
+                imageList.Add(new FileNameSortInfo(imageFilePath, number));
+            }
+            if(imageList.Count == 0)
+            {
+                return;
+            }
+
+            // Sort the list by increasing image index.
+            imageList.Sort((a, b) => a.Number.CompareTo(b.Number));
+
+            // Fix image names so that MEncoder gets things right...
+            var digitCount = GetDigitCount(highestNumber);
+            foreach(var image in imageList)
+            {
+                var imageDigitCount = GetDigitCount(image.Number);
+                if(imageDigitCount == digitCount)
+                {
+                    break;
+                }
+
+                var leadingZeroes = new string('0', digitCount - imageDigitCount);
+                var newFileName = name + "_" + leadingZeroes + image.Number.ToString() + ".tga";
+                var newFilePath = Path.Combine(folderPath, newFileName);
+                File.Move(image.FilePath, newFilePath);
+                image.FilePath = newFilePath;
+            }
+            
+            var sequence = new ImageSequence();
+            foreach(var image in imageList)
+            {
+                sequence.ImageFilePaths.Add(image.FilePath);
+            }
+            sequence.Type = imageType;
+            sequence.ImageSequencePath = name + "_*.tga";
+            sequence.DemoCutFolderName = cutFolderName;
+            sequence.FolderPath = folderPath;
+            _imageSequences.Add(sequence);
+
+            FrameCount += sequence.ImageFilePaths.Count;
+        }
+
+        private int GetDigitCount(int number)
+        {
+            var count = 0; 
+            do 
+            { 
+                ++count;
+            }
+            while((number /= 10) >= 1);
+
+            return count;
+        }
+
+        private class FileNameSortInfo
+        {
+            public FileNameSortInfo(string filePath, int number)
+            {
+                FilePath = filePath;
+                Number = number;
+            }
+
+            public string FilePath;
+            public int Number;
+        }
+    }
 }
