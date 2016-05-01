@@ -1085,19 +1085,35 @@ namespace Uber.MmeMuxer
             FrameCount += sequence.ImageFilePaths.Count;
         }
 
+        private static int ReadFileHeader(string filePath)
+        {
+            using(var reader = new BinaryReader(File.Open(filePath, FileMode.Open)))
+            {                
+                return reader.ReadInt32();
+            }
+        }
+
         private static bool IsFilePNG(string filePath)
         {
-            using(var file = new BinaryReader(File.Open(filePath, FileMode.Open)))
-            {
-                return file.ReadInt64() == 727905341920923785; // ‰PNG
-            }
+            return ReadFileHeader(filePath) == 1196314761; // "‰PNG"
         }
 
         private static bool IsFileTGA(string filePath)
         {
-            using(var file = new BinaryReader(File.Open(filePath, FileMode.Open)))
+            return ReadFileHeader(filePath) == 131072; // 00 00 02 00
+        }
+
+        private static bool IsFileJPG(string filePath)
+        {
+            var file = File.Open(filePath, FileMode.Open);
+            using(var reader = new BinaryReader(file))
             {
-                return file.ReadInt64() == 131072;
+                var number1 = reader.ReadInt32();
+                file.Position = 6;
+                var number2 = reader.ReadInt32();
+
+                return number1 == -520103681 && // FF D8 FF E0
+                    number2 == 1179207242;      // "JFIF"
             }
         }
 
@@ -1118,7 +1134,9 @@ namespace Uber.MmeMuxer
         private static FileFormat[] FileFormats = new FileFormat[]
         {
             new FileFormat(".tga", IsFileTGA),
-            new FileFormat(".png", IsFilePNG)
+            new FileFormat(".png", IsFilePNG),
+            new FileFormat(".jpg", IsFileJPG),
+            new FileFormat(".jpeg", IsFileJPG)
         };
         
         private int GetDigitCount(int number)
