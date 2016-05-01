@@ -1,3 +1,7 @@
+0.2.1 (02.05.2016)
+ADD: Support for Reflex capture folders with png/jpg/jpeg files
+FIX: Renaming Reflex capture images that use the wrong file extension
+
 0.2.0 (12.11.2015)
 ADD: Support for Reflex image sequences
 ADD: Title bar job progress to keep track of progress even when minimized
