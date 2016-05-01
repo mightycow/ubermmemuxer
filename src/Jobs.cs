@@ -975,12 +975,29 @@ namespace Uber.MmeMuxer
 
         private void AddImageSequence(string folderPath, string name, ImageType imageType, string cutFolderName, int frameRate)
         {
-            var imageFilePaths = Directory.GetFiles(folderPath, "*.tga", SearchOption.TopDirectoryOnly);
-            if(imageFilePaths.Length == 0)
+            // Find images in one of the supported formats.
+            string[] imageFilePaths = null;
+            var extension = "";
+            var formatIndex = -1;
+            for(var i = 0; i < FileFormats.Length; ++i)
+            {
+                var format = FileFormats[i];
+                imageFilePaths = Directory.GetFiles(folderPath, "*" + format.Extension, SearchOption.TopDirectoryOnly);
+                if(imageFilePaths.Length > 0)
+                {
+                    extension = format.Extension;
+                    formatIndex = i;
+                    break;
+                }
+            }
+
+            if(imageFilePaths == null)
             {
                 return;
             }
 
+            // Create a list with the real index numbers since alphanumeric sorting
+            // of indices without leading zeroes would be wrong.
             var fileNameRegEx = new Regex(name + "_" + @"(\d+)", RegexOptions.Compiled);
             var imageList = new List<FileNameSortInfo>();
             var highestNumber = 0;
@@ -1017,19 +1034,49 @@ namespace Uber.MmeMuxer
 
                 var imageDigitCount = GetDigitCount(image.Number);
                 var leadingZeroes = new string('0', digitCount - imageDigitCount);
-                var newFileName = name + "_" + leadingZeroes + image.Number.ToString() + ".tga";
+                var newFileName = name + "_" + leadingZeroes + image.Number.ToString() + extension;
                 var newFilePath = Path.Combine(folderPath, newFileName);
                 File.Move(image.FilePath, newFilePath);
                 image.FilePath = newFilePath;
             }
-            
+
+            // Watch out for Reflex outputting images with the wrong file extension.
+            var finalExtension = extension;
+            if(!FileFormats[formatIndex].IsValid(imageList[0].FilePath))
+            {
+                // Let's find the real file format.
+                bool correctFormatFound = false;
+                for(var i = 0; i < FileFormats.Length; ++i)
+                {
+                    if(i != formatIndex && FileFormats[i].IsValid(imageList[0].FilePath))
+                    {
+                        correctFormatFound = true;
+                        finalExtension = FileFormats[i].Extension;
+                        break;
+                    }
+                }
+                if(!correctFormatFound)
+                {
+                    return;
+                }
+
+                // Rename the files and update our image sequence structure.
+                foreach(var image in imageList)
+                {
+                    var newFilePath = Path.ChangeExtension(image.FilePath, finalExtension);
+                    File.Move(image.FilePath, newFilePath);
+                    image.FilePath = newFilePath;
+                }
+                UmmApp.Instance.LogWarning("Detected {0} files disguised as {1} files, fixed that for you.", finalExtension, extension);
+            }
+
             var sequence = new ImageSequence();
             foreach(var image in imageList)
             {
                 sequence.ImageFilePaths.Add(image.FilePath);
             }
             sequence.Type = imageType;
-            sequence.ImageSequencePath = name + "_*.tga";
+            sequence.ImageSequencePath = name + "_*" + finalExtension;
             sequence.DemoCutFolderName = cutFolderName;
             sequence.FolderPath = folderPath;
             sequence.FrameRate = frameRate;
@@ -1038,6 +1085,42 @@ namespace Uber.MmeMuxer
             FrameCount += sequence.ImageFilePaths.Count;
         }
 
+        private static bool IsFilePNG(string filePath)
+        {
+            using(var file = new BinaryReader(File.Open(filePath, FileMode.Open)))
+            {
+                return file.ReadInt64() == 727905341920923785; // ‰PNG
+            }
+        }
+
+        private static bool IsFileTGA(string filePath)
+        {
+            using(var file = new BinaryReader(File.Open(filePath, FileMode.Open)))
+            {
+                return file.ReadInt64() == 131072;
+            }
+        }
+
+        private class FileFormat
+        {
+            public delegate bool IsValidDelegate(string filePath);
+
+            public FileFormat(string extension, IsValidDelegate isValid)
+            {
+                Extension = extension;
+                IsValid = isValid;
+            }
+
+            public string Extension;
+            public IsValidDelegate IsValid;
+        }
+
+        private static FileFormat[] FileFormats = new FileFormat[]
+        {
+            new FileFormat(".tga", IsFileTGA),
+            new FileFormat(".png", IsFilePNG)
+        };
+        
         private int GetDigitCount(int number)
         {
             var count = 0; 
