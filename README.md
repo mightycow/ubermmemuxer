@@ -6,7 +6,7 @@ It allows you to mux all of the output into .avi files with audio (when availabl
 Official UMM binaries
 ---------------------
 
-[Grab them here](http://giant.pourri.ch/snif.php?path=UMM/).
+[Grab them here](http://myt.playmorepromode.com/umm/).
 
 Installation
 ------------
